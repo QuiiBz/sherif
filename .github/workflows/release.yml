@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
 
 jobs:
   publish-npm-binaries:
@@ -82,7 +83,7 @@ jobs:
         run: |
           cd npm
           # set the binary name
-          bin="sheriftest"
+          bin="sherif"
           # derive the OS and architecture from the build matrix name
           # note: when split by a hyphen, first part is the OS and the second is the architecture
           node_os=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f1)
