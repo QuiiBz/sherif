@@ -5,6 +5,8 @@ use crate::rules::{
     root_package_private_field::RootPackagePrivateFieldIssue, Issue,
 };
 use anyhow::Result;
+use indexmap::IndexMap;
+use semver::VersionReq;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -24,6 +26,10 @@ impl RootPackage {
 
     pub fn get_workspaces(&self) -> Option<Vec<String>> {
         self.0.inner.workspaces.clone()
+    }
+
+    pub fn get_dev_dependencies(&self) -> Option<IndexMap<String, VersionReq>> {
+        self.0.get_dev_dependencies()
     }
 
     pub fn check_private(&self) -> Option<Box<dyn Issue>> {
