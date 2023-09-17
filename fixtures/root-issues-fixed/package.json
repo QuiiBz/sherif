@@ -1,0 +1,9 @@
+{
+  "name": "root-issues-fixed",
+  "workspaces": [],
+  "private": true,
+  "packageManager": "pnpm@1.2.3",
+  "devDependencies": {
+    "eslint": "1.2.3"
+  }
+}

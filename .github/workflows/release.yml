@@ -1,0 +1,139 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  publish-npm-binaries:
+    name: Publish NPM binaries
+    runs-on: ${{ matrix.build.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - {
+              NAME: linux-x64-glibc,
+              OS: ubuntu-20.04,
+              TOOLCHAIN: stable,
+              TARGET: x86_64-unknown-linux-gnu,
+            }
+          - {
+              NAME: linux-arm64-glibc,
+              OS: ubuntu-20.04,
+              TOOLCHAIN: stable,
+              TARGET: aarch64-unknown-linux-gnu,
+            }
+          - {
+              NAME: win32-x64-msvc,
+              OS: windows-2022,
+              TOOLCHAIN: stable,
+              TARGET: x86_64-pc-windows-msvc,
+            }
+          - {
+              NAME: win32-arm64-msvc,
+              OS: windows-2022,
+              TOOLCHAIN: stable,
+              TARGET: aarch64-pc-windows-msvc,
+            }
+          - {
+              NAME: darwin-x64,
+              OS: macos-11,
+              TOOLCHAIN: stable,
+              TARGET: x86_64-apple-darwin,
+            }
+          - {
+              NAME: darwin-arm64,
+              OS: macos-11,
+              TOOLCHAIN: stable,
+              TARGET: aarch64-apple-darwin,
+            }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set the release version
+        shell: bash
+        run: echo "RELEASE_VERSION=${GITHUB_REF:11}" >> $GITHUB_ENV
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.build.TOOLCHAIN }}
+          target: ${{ matrix.build.TARGET }}
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --locked --target ${{ matrix.build.TARGET }}
+          use-cross: ${{ matrix.build.OS == 'ubuntu-20.04' }} # use `cross` for Linux builds
+
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish to NPM
+        shell: bash
+        run: |
+          cd npm
+          # set the binary name
+          bin="sheriftest"
+          # derive the OS and architecture from the build matrix name
+          # note: when split by a hyphen, first part is the OS and the second is the architecture
+          node_os=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f1)
+          export node_os
+          node_arch=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f2)
+          export node_arch
+          # set the version
+          export node_version="${{ env.RELEASE_VERSION }}"
+          # set the package name
+          # note: use 'windows' as OS name instead of 'win32'
+          if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
+            export node_pkg="${bin}-windows-${node_arch}"
+          else
+            export node_pkg="${bin}-${node_os}-${node_arch}"
+          fi
+          # create the package directory
+          mkdir -p "${node_pkg}/bin"
+          # generate package.json from the template
+          envsubst < package.json.tmpl > "${node_pkg}/package.json"
+          # copy the binary into the package
+          # note: windows binaries has '.exe' extension
+          if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
+            bin="${bin}.exe"
+          fi
+          cp "../target/${{ matrix.build.TARGET }}/release/${bin}" "${node_pkg}/bin"
+          cp ../README.md "${node_pkg}"
+          # publish the package
+          cd "${node_pkg}"
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-npm-base:
+    name: Publish NPM package
+    needs: publish-npm-binaries
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish the package
+        shell: bash
+        run: |
+          cd npm/app
+          cp ../../README.md .
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

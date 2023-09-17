@@ -1,0 +1,7 @@
+{
+  "name": "abc",
+  "dependencies": {
+    "next": "4.5.6",
+    "react": "1.2.3"
+  }
+}

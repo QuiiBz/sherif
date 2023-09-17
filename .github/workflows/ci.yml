@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --locked --verbose
+
+  test:
+    name: Test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --verbose
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Lint
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --tests --verbose -- -D warnings
+
+  format:
+    name: Format
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check --verbose

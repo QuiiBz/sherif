@@ -1,0 +1,13 @@
+{
+  "name": "dependencies",
+  "workspaces": [
+    "packages/*",
+    "docs"
+  ],
+  "private": true,
+  "packageManager": "pnpm@1.2.3",
+  "devDependencies": {
+    "eslint": "1.2.3",
+    "prettier": "1.2.3"
+  }
+}
