@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-#[derive(Debug, Parser, Clone)]
+#[derive(Debug, Parser)]
 pub struct Args {
     /// Path to the monorepo root.
     #[arg(default_value = ".")]

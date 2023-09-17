@@ -102,19 +102,19 @@ pub fn collect_issues<'a>(
 
             for (name, version) in dependencies {
                 all_dependencies
-                    .entry(name.clone())
+                    .entry(name)
                     .or_insert_with(Vec::new)
-                    .push(version.clone());
+                    .push(version);
             }
         }
     }
 
     for (name, versions) in all_dependencies {
         if versions.len() > 1 && !versions.windows(2).all(|window| window[0] == window[1]) {
+            let ignored = args.ignore_dependency.contains(&name);
+
             issues.add_raw(MultipleDependencyVersionsIssue::new(
-                name.clone(),
-                versions.clone(),
-                args.ignore_dependency.contains(&name),
+                name, versions, ignored,
             ));
         }
     }
