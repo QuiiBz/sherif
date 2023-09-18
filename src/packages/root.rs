@@ -2,7 +2,7 @@ use super::Package;
 use crate::rules::{
     root_package_dependencies::RootPackageDependenciesIssue,
     root_package_manager_field::RootPackageManagerFieldIssue,
-    root_package_private_field::RootPackagePrivateFieldIssue, Issue,
+    root_package_private_field::RootPackagePrivateFieldIssue, BoxIssue,
 };
 use anyhow::Result;
 use std::path::Path;
@@ -26,7 +26,7 @@ impl RootPackage {
         self.0.inner.workspaces.clone()
     }
 
-    pub fn check_private(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_private(&self) -> Option<BoxIssue> {
         match self.0.inner.private {
             Some(true) => None,
             Some(false) => Some(RootPackagePrivateFieldIssue::new(true)),
@@ -34,29 +34,29 @@ impl RootPackage {
         }
     }
 
-    pub fn check_package_manager(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_package_manager(&self) -> Option<BoxIssue> {
         match self.0.inner.private.is_none() {
             true => Some(RootPackageManagerFieldIssue::new()),
             false => None,
         }
     }
 
-    pub fn check_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_dependencies(&self) -> Option<BoxIssue> {
         match self.0.inner.dependencies.is_some() {
             true => Some(RootPackageDependenciesIssue::new()),
             false => None,
         }
     }
 
-    pub fn check_dev_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_dev_dependencies(&self) -> Option<BoxIssue> {
         self.0.check_dev_dependencies()
     }
 
-    pub fn check_peer_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_peer_dependencies(&self) -> Option<BoxIssue> {
         self.0.check_peer_dependencies()
     }
 
-    pub fn check_optional_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_optional_dependencies(&self) -> Option<BoxIssue> {
         self.0.check_optional_dependencies()
     }
 }

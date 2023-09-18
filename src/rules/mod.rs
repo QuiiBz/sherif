@@ -3,6 +3,7 @@ use std::{borrow::Cow, fmt::Display};
 
 pub mod empty_dependencies;
 pub mod mutiple_dependency_versions;
+pub mod packages_without_package_json;
 pub mod root_package_dependencies;
 pub mod root_package_manager_field;
 pub mod root_package_private_field;
@@ -46,11 +47,19 @@ pub trait Issue {
     fn level(&self) -> IssueLevel;
     fn message(&self) -> String;
     fn why(&self) -> Cow<'static, str>;
+
+    fn to_packages_without_package_json_issue(
+        &mut self,
+    ) -> Option<&mut packages_without_package_json::PackagesWithoutPackageJsonIssue> {
+        None
+    }
 }
+
+pub type BoxIssue = Box<dyn Issue>;
 
 pub struct IssuesList<'a> {
     ignored_issues: &'a Vec<String>,
-    issues: Vec<Box<dyn Issue>>,
+    issues: Vec<BoxIssue>,
 }
 
 impl<'a> IssuesList<'a> {
@@ -61,7 +70,7 @@ impl<'a> IssuesList<'a> {
         }
     }
 
-    pub fn add_raw(&mut self, issue: Box<dyn Issue>) {
+    pub fn add_raw(&mut self, issue: BoxIssue) {
         if self.ignored_issues.contains(&issue.name().to_string()) {
             return;
         }
@@ -69,7 +78,7 @@ impl<'a> IssuesList<'a> {
         self.issues.push(issue);
     }
 
-    pub fn add(&mut self, issue: Option<Box<dyn Issue>>) {
+    pub fn add(&mut self, issue: Option<BoxIssue>) {
         if let Some(issue) = issue {
             self.add_raw(issue);
         }
@@ -88,7 +97,7 @@ impl<'a> IssuesList<'a> {
 }
 
 impl IntoIterator for IssuesList<'_> {
-    type Item = Box<dyn Issue>;
+    type Item = BoxIssue;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {

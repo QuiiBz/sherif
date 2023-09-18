@@ -1,12 +1,12 @@
-use crate::args::Args;
 use crate::packages::root::RootPackage;
-use crate::packages::Package;
+use crate::packages::{Package, PackagesList};
 use crate::rules::mutiple_dependency_versions::MultipleDependencyVersionsIssue;
-use crate::rules::IssuesList;
+use crate::rules::{BoxIssue, IssuesList};
+use crate::{args::Args, rules::packages_without_package_json};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::Deserialize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const PNPM_WORKSPACE: &str = "pnpm-workspace.yaml";
 
@@ -18,7 +18,7 @@ struct PnpmWorkspace {
 fn resolve_workspace_packages(
     path: &Path,
     package_root_workspaces: Option<Vec<String>>,
-) -> Result<Vec<Package>> {
+) -> Result<(Vec<Package>, Vec<BoxIssue>)> {
     let mut all_packages = Vec::new();
     let mut packages_list = package_root_workspaces;
 
@@ -38,6 +38,27 @@ fn resolve_workspace_packages(
         packages_list = Some(workspace.packages);
     }
 
+    let mut packages_issues: Vec<BoxIssue> = Vec::new();
+
+    let mut add_package = |path: PathBuf| match Package::new(path.clone()) {
+        Ok(package) => all_packages.push(package),
+        Err(error) => {
+            if error.to_string().contains("package.json") {
+                if packages_issues.is_empty() {
+                    packages_issues.push(Box::new(
+                        packages_without_package_json::PackagesWithoutPackageJsonIssue::new(),
+                    ));
+                }
+
+                packages_issues.iter_mut().for_each(|issue| {
+                    if let Some(issue) = issue.to_packages_without_package_json_issue() {
+                        issue.add_package(path.to_string_lossy().to_string());
+                    }
+                });
+            }
+        }
+    };
+
     if let Some(packages) = packages_list {
         for package in packages {
             if package.ends_with('*') {
@@ -45,36 +66,45 @@ fn resolve_workspace_packages(
                 let packages = path.join(directory).read_dir()?;
 
                 for package in packages {
-                    if let Ok(package) = Package::new(package?.path()) {
-                        all_packages.push(package);
+                    let package = package?;
+
+                    if package.file_type()?.is_dir() {
+                        add_package(package.path());
                     }
                 }
             } else {
-                let package = path.join(package);
-
-                if let Ok(package) = Package::new(package) {
-                    all_packages.push(package);
-                }
+                add_package(path.join(package));
             }
         }
     }
 
-    Ok(all_packages)
+    Ok((all_packages, packages_issues))
 }
 
-pub fn collect_packages(args: &Args) -> Result<(RootPackage, Vec<Package>)> {
+pub fn collect_packages(args: &Args) -> Result<PackagesList> {
     let root_package = RootPackage::new(&args.path)?;
-    let packages = resolve_workspace_packages(&args.path, root_package.get_workspaces())?;
+    let (packages, packages_issues) =
+        resolve_workspace_packages(&args.path, root_package.get_workspaces())?;
 
-    Ok((root_package, packages))
+    Ok(PackagesList {
+        root_package,
+        packages,
+        packages_issues,
+    })
 }
 
-pub fn collect_issues<'a>(
-    args: &'a Args,
-    root_package: &RootPackage,
-    packages: &[Package],
-) -> IssuesList<'a> {
+pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_> {
     let mut issues = IssuesList::new(&args.ignore_rule);
+
+    let PackagesList {
+        root_package,
+        packages,
+        packages_issues,
+    } = packages_list;
+
+    for package_issue in packages_issues {
+        issues.add_raw(package_issue);
+    }
 
     issues.add(root_package.check_private());
     issues.add(root_package.check_package_manager());
@@ -125,6 +155,7 @@ pub fn collect_issues<'a>(
 #[cfg(test)]
 mod test {
     use super::*;
+    use debugless_unwrap::DebuglessUnwrapErr;
 
     #[test]
     fn collect_packages_unknown_dir() {
@@ -139,7 +170,7 @@ mod test {
 
         assert!(result.is_err());
         assert_eq!(
-            result.unwrap_err().to_string(),
+            result.debugless_unwrap_err().to_string(),
             "Path \"unknown\" is not a directory"
         );
     }
@@ -157,7 +188,7 @@ mod test {
 
         assert!(result.is_err());
         assert_eq!(
-            result.unwrap_err().to_string(),
+            result.debugless_unwrap_err().to_string(),
             "`package.json` not found in \"fixtures/empty\""
         );
     }
@@ -174,10 +205,15 @@ mod test {
         let result = collect_packages(&args);
 
         assert!(result.is_ok());
-        let (root_package, packages) = result.unwrap();
+        let PackagesList {
+            root_package,
+            packages,
+            packages_issues,
+        } = result.unwrap();
 
         assert_eq!(root_package.get_name(), "basic");
         assert_eq!(packages.len(), 3);
+        assert_eq!(packages_issues.len(), 0);
     }
 
     #[test]
@@ -192,10 +228,15 @@ mod test {
         let result = collect_packages(&args);
 
         assert!(result.is_ok());
-        let (root_package, packages) = result.unwrap();
+        let PackagesList {
+            root_package,
+            packages,
+            packages_issues,
+        } = result.unwrap();
 
         assert_eq!(root_package.get_name(), "pnpm");
         assert_eq!(packages.len(), 3);
+        assert_eq!(packages_issues.len(), 0);
     }
 
     #[test]
@@ -211,8 +252,37 @@ mod test {
 
         assert!(result.is_err());
         assert_eq!(
-            result.unwrap_err().to_string(),
+            result.debugless_unwrap_err().to_string(),
             "No `workspaces` field in the root `package.json`, or `pnpm-workspace.yaml` file not found in \"fixtures/no-workspace-pnpm\""
+        );
+    }
+
+    #[test]
+    fn collect_packages_without_package_json() {
+        let args = Args {
+            path: "fixtures/without-package-json".into(),
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let result = collect_packages(&args);
+
+        assert!(result.is_ok());
+        let PackagesList {
+            root_package,
+            packages,
+            packages_issues,
+        } = result.unwrap();
+
+        assert_eq!(root_package.get_name(), "without-package-json");
+        assert_eq!(packages.len(), 1);
+        assert_eq!(packages_issues.len(), 1);
+
+        colored::control::set_override(false);
+        assert_eq!(
+            packages_issues[0].message(),
+            "2 packages doesn't have a package.json file: fixtures/without-package-json/packages/abc, fixtures/without-package-json/docs"
         );
     }
 
@@ -225,10 +295,10 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let (root_package, packages) = collect_packages(&args).unwrap();
-        assert_eq!(root_package.get_name(), "root-issues");
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "root-issues");
 
-        let issues = collect_issues(&args, &root_package, &packages);
+        let issues = collect_issues(&args, packages_list);
         let issues = issues.into_iter().collect::<Vec<_>>();
 
         assert_eq!(issues.len(), 4);
@@ -247,10 +317,10 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let (root_package, packages) = collect_packages(&args).unwrap();
-        assert_eq!(root_package.get_name(), "root-issues-fixed");
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "root-issues-fixed");
 
-        let issues = collect_issues(&args, &root_package, &packages);
+        let issues = collect_issues(&args, packages_list);
         let issues = issues.into_iter().collect::<Vec<_>>();
 
         assert_eq!(issues.len(), 0);
@@ -265,11 +335,11 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let (root_package, packages) = collect_packages(&args).unwrap();
-        assert_eq!(root_package.get_name(), "dependencies");
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
         colored::control::set_override(false);
-        let issues = collect_issues(&args, &root_package, &packages);
+        let issues = collect_issues(&args, packages_list);
         let issues = issues.into_iter().collect::<Vec<_>>();
 
         assert_eq!(issues.len(), 2);

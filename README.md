@@ -50,6 +50,10 @@ A given dependency should use the same version across the monorepo.
 
 You can use `--ignore-dependency <name>` (or `-i <name>`) to ignore a dependency and allow having multiple versions of it.
 
+#### `packages-without-package-json`
+
+All packages defined in the root `package.json`' `workspaces` field or `pnpm-workspace.yaml` should have a `package.json` file.
+
 #### `root-package-dependencies`
 
 The root `package.json` is private, so making a distinction between `dependencies` and `devDependencies` is useless - only use `devDependencies`.

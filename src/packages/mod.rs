@@ -1,14 +1,21 @@
 use crate::rules::{
     empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
-    Issue,
+    BoxIssue,
 };
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
+use root::RootPackage;
 use semver::VersionReq;
 use serde::Deserialize;
 use std::path::PathBuf;
 
 pub mod root;
+
+pub struct PackagesList {
+    pub root_package: RootPackage,
+    pub packages: Vec<Package>,
+    pub packages_issues: Vec<BoxIssue>,
+}
 
 #[derive(Deserialize, Debug)]
 struct PackageInner {
@@ -59,7 +66,7 @@ impl Package {
         &self,
         deps: &Option<IndexMap<String, String>>,
         dependency_kind: DependencyKind,
-    ) -> Option<Box<dyn Issue>> {
+    ) -> Option<BoxIssue> {
         if let Some(dependencies) = deps {
             if dependencies.is_empty() {
                 return Some(EmptyDependenciesIssue::new(
@@ -72,25 +79,25 @@ impl Package {
         None
     }
 
-    pub fn check_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_dependencies(&self) -> Option<BoxIssue> {
         self.check_deps(&self.inner.dependencies, DependencyKind::Dependencies)
     }
 
-    pub fn check_dev_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_dev_dependencies(&self) -> Option<BoxIssue> {
         self.check_deps(
             &self.inner.dev_dependencies,
             DependencyKind::DevDependencies,
         )
     }
 
-    pub fn check_peer_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_peer_dependencies(&self) -> Option<BoxIssue> {
         self.check_deps(
             &self.inner.peer_dependencies,
             DependencyKind::PeerDependencies,
         )
     }
 
-    pub fn check_optional_dependencies(&self) -> Option<Box<dyn Issue>> {
+    pub fn check_optional_dependencies(&self) -> Option<BoxIssue> {
         self.check_deps(
             &self.inner.optional_dependencies,
             DependencyKind::OptionalDependencies,

@@ -15,7 +15,7 @@ mod rules;
 
 fn main() {
     let args = Args::parse();
-    let (root_package, packages) = match collect_packages(&args) {
+    let packages_list = match collect_packages(&args) {
         Ok(result) => result,
         Err(error) => {
             eprintln!();
@@ -29,10 +29,9 @@ fn main() {
         }
     };
 
-    let issues = collect_issues(&args, &root_package, &packages);
-
+    let total_packages = packages_list.packages.len();
+    let issues = collect_issues(&args, packages_list);
     let total_issues = issues.total_len();
-    let total_packages = packages.len();
 
     if total_issues == 0 {
         print_success();
