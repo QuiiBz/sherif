@@ -131,10 +131,12 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
             }
 
             for (name, version) in dependencies {
-                all_dependencies
-                    .entry(name)
-                    .or_insert_with(Vec::new)
-                    .push(version);
+                if version.comparators.len() != 0 {
+                    all_dependencies
+                        .entry(name)
+                        .or_insert_with(Vec::new)
+                        .push(version);
+                }
             }
         }
     }
@@ -345,5 +347,25 @@ mod test {
         assert_eq!(issues.len(), 2);
         assert_eq!(issues[0].message(), "The `next` dependency has multiple versions, ^1.2.3 being the lowest and ^4.5.6 the highest.".to_string());
         assert_eq!(issues[1].message(), "The `react` dependency has multiple versions, ^1.2.3 being the lowest and ^4.5.6 the highest.".to_string());
+    }
+
+    #[test]
+    fn collect_dependencies_without_star() {
+        let args = Args {
+            path: "fixtures/dependencies-star".into(),
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "dependencies-star");
+
+        colored::control::set_override(false);
+        let issues = collect_issues(&args, packages_list);
+        let issues = issues.into_iter().collect::<Vec<_>>();
+
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].message(), "The `next` dependency has multiple versions, ^1.2.3 being the lowest and ^4.5.6 the highest.".to_string());
     }
 }
