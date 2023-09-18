@@ -1,7 +1,7 @@
 use crate::packages::root::RootPackage;
 use crate::packages::{Package, PackagesList};
 use crate::rules::mutiple_dependency_versions::MultipleDependencyVersionsIssue;
-use crate::rules::{BoxIssue, Issue, IssuesList};
+use crate::rules::{BoxIssue, IssuesList};
 use crate::{args::Args, rules::packages_without_package_json};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;

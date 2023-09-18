@@ -1,6 +1,6 @@
 use crate::rules::{
     empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
-    BoxIssue, Issue,
+    BoxIssue,
 };
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;

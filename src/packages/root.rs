@@ -2,7 +2,7 @@ use super::Package;
 use crate::rules::{
     root_package_dependencies::RootPackageDependenciesIssue,
     root_package_manager_field::RootPackageManagerFieldIssue,
-    root_package_private_field::RootPackagePrivateFieldIssue, BoxIssue, Issue,
+    root_package_private_field::RootPackagePrivateFieldIssue, BoxIssue,
 };
 use anyhow::Result;
 use std::path::Path;
