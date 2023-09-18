@@ -10,6 +10,17 @@ pub enum DependencyKind {
     OptionalDependencies,
 }
 
+impl Display for DependencyKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DependencyKind::Dependencies => write!(f, "{}", "dependencies".blue()),
+            DependencyKind::DevDependencies => write!(f, "{}", "devDependencies".blue()),
+            DependencyKind::PeerDependencies => write!(f, "{}", "peerDependencies".blue()),
+            DependencyKind::OptionalDependencies => write!(f, "{}", "optionalDependencies".blue()),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct EmptyDependenciesIssue {
     package: String,
@@ -22,17 +33,6 @@ impl EmptyDependenciesIssue {
             package,
             dependency_kind,
         })
-    }
-}
-
-impl Display for DependencyKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DependencyKind::Dependencies => write!(f, "{}", "dependencies".blue()),
-            DependencyKind::DevDependencies => write!(f, "{}", "devDependencies".blue()),
-            DependencyKind::PeerDependencies => write!(f, "{}", "peerDependencies".blue()),
-            DependencyKind::OptionalDependencies => write!(f, "{}", "optionalDependencies".blue()),
-        }
     }
 }
 

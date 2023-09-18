@@ -25,3 +25,6 @@ semver = "1.0.18"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = { version = "1.0.107", features = ["preserve_order"] }
 serde_yaml = "0.9.25"
+
+[dev-dependencies]
+debugless-unwrap = "0.0.4"
