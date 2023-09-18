@@ -37,7 +37,7 @@ We recommend running Sherif in your CI once all errors are fixed. Run it by **sp
 
 <summary>GitHub Actions example</summary>
 
-```
+```yaml
 name: Sherif
 on:
   pull_request:
@@ -75,13 +75,13 @@ sherif -p @repo/tools
 > **Note**
 > Sherif doesn't have many rules for now, but will likely have more in the future (along with more features).
 
-#### `empty-dependencies`
+#### ⨯ `empty-dependencies`
 
-⨯ Error: `package.json` files should not have empty dependencies fields.
+`package.json` files should not have empty dependencies fields.
 
-#### `multiple-dependency-versions`
+#### ⨯ `multiple-dependency-versions`
 
-⨯ Error: A given dependency should use the same version across the monorepo.
+A given dependency should use the same version across the monorepo.
 
 You can ignore this rule for a dependency if you expect to have multiple versions by using `--ignore-dependency <name>` (or `-i <name>`):
 
@@ -90,21 +90,21 @@ You can ignore this rule for a dependency if you expect to have multiple version
 sherif -i react -i @types/node
 ```
 
-#### `packages-without-package-json`
+#### ⚠️ `packages-without-package-json`
 
-⚠️ Warning: All packages defined in the root `package.json`' `workspaces` field or `pnpm-workspace.yaml` should have a `package.json` file.
+All packages defined in the root `package.json`' `workspaces` field or `pnpm-workspace.yaml` should have a `package.json` file.
 
-#### `root-package-dependencies`
+#### ⚠️ `root-package-dependencies`
 
-⨯ Warning: The root `package.json` is private, so making a distinction between `dependencies` and `devDependencies` is useless - only use `devDependencies`.
+The root `package.json` is private, so making a distinction between `dependencies` and `devDependencies` is useless - only use `devDependencies`.
 
-#### `root-package-manager-field`
+#### ⨯ `root-package-manager-field`
 
-⨯ Error: The root `package.json` should specify the package manager and version to use. Useful for tools like corepack.
+The root `package.json` should specify the package manager and version to use. Useful for tools like corepack.
 
-#### `root-package-private-field`
+#### ⨯ `root-package-private-field`
 
-⨯ Error: The root `package.json` should be private to prevent accidentaly publishing it to a registry.
+The root `package.json` should be private to prevent accidentaly publishing it to a registry.
 
 ## Credits
 
