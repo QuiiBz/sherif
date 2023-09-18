@@ -131,7 +131,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
             }
 
             for (name, version) in dependencies {
-                if version.comparators.len() != 0 {
+                if !version.comparators.is_empty() {
                     all_dependencies
                         .entry(name)
                         .or_insert_with(Vec::new)
