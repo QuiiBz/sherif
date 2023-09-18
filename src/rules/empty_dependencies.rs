@@ -42,7 +42,7 @@ impl Issue for EmptyDependenciesIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Warning
+        IssueLevel::Error
     }
 
     fn message(&self) -> String {
@@ -67,7 +67,7 @@ mod test {
         let issue = EmptyDependenciesIssue::new("test".to_string(), DependencyKind::Dependencies);
 
         assert_eq!(issue.name(), "empty-dependencies");
-        assert_eq!(issue.level(), IssueLevel::Warning);
+        assert_eq!(issue.level(), IssueLevel::Error);
     }
 
     #[test]

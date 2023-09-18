@@ -22,7 +22,7 @@ impl Issue for RootPackageDependenciesIssue {
 
     fn message(&self) -> String {
         format!(
-            "./package.json shouldn't have any `{}` , only `{}`",
+            "./package.json shouldn't have any `{}` , only `{}`.",
             "dependencies".red(),
             "devDependencies".green()
         )
@@ -47,7 +47,7 @@ mod test {
         colored::control::set_override(false);
         assert_eq!(
             issue.message(),
-            "./package.json shouldn't have any `dependencies` , only `devDependencies`"
+            "./package.json shouldn't have any `dependencies` , only `devDependencies`."
         );
     }
 }

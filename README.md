@@ -22,7 +22,7 @@ Sherif is an opinionated, zero-config linter for JavaScript monorepos. It runs f
 
 ## Installation
 
-Run `sherif` in the root of your monorepo to list the found issues:
+Run `sherif` in the root of your monorepo to list the found issues. Any error will cause Sherif to exit with a code 1:
 
 ```bash
 # PNPM
@@ -31,38 +31,78 @@ pnpm dlx sherif@latest
 npx sherif@latest
 ```
 
-Any error will cause Sherif to exit with a code 1. We recommend running Sherif in your CI once all errors are fixed. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo)
+We recommend running Sherif in your CI once all errors are fixed. Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
+
+<details>
+
+<summary>GitHub Actions example</summary>
+
+```yaml
+name: Sherif
+on:
+  pull_request:
+jobs:
+  check:
+    name: Run Sherif
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: npx sherif@0.1.0
+```
+
+</details>
 
 ## Rules
 
-You can use `--ignore-rule <name>` (or `-r <name>`) to ignore one or multiple rules, and `--ignore-package <name>` (or `-p <name>`) to ignore one or multiple packages.
+You can ignore a specific rule by using `--ignore-rule <name>` (or `-r <name>`):
+
+```bash
+# Ignore both rules
+sherif -r packages-without-package-json -r root-package-manager-field
+```
+
+You can ignore all issues in a package by using `--ignore-package <name>` (or `-p <name>`):
+
+```bash
+# Ignore all issues in the package
+sherif -p @repo/tools
+```
 
 > **Note**
 > Sherif doesn't have many rules for now, but will likely have more in the future (along with more features).
 
-#### `empty-dependencies`
+#### `empty-dependencies` ❌
 
 `package.json` files should not have empty dependencies fields.
 
-#### `multiple-dependency-versions`
+#### `multiple-dependency-versions` ❌
 
 A given dependency should use the same version across the monorepo.
 
-You can use `--ignore-dependency <name>` (or `-i <name>`) to ignore a dependency and allow having multiple versions of it.
+You can ignore this rule for a dependency if you expect to have multiple versions by using `--ignore-dependency <name>` (or `-i <name>`):
 
-#### `packages-without-package-json`
+```bash
+# Ignore dependencies that are expected to have multiple versions
+sherif -i react -i @types/node
+```
+
+#### `packages-without-package-json` ⚠️
 
 All packages defined in the root `package.json`' `workspaces` field or `pnpm-workspace.yaml` should have a `package.json` file.
 
-#### `root-package-dependencies`
+#### `root-package-dependencies` ⚠️
 
 The root `package.json` is private, so making a distinction between `dependencies` and `devDependencies` is useless - only use `devDependencies`.
 
-#### `root-package-manager-field`
+#### `root-package-manager-field` ❌
 
 The root `package.json` should specify the package manager and version to use. Useful for tools like corepack.
 
-#### `root-package-private-field`
+#### `root-package-private-field` ❌
 
 The root `package.json` should be private to prevent accidentaly publishing it to a registry.
 
