@@ -1,8 +1,10 @@
-use crate::args::Args;
 use crate::packages::root::RootPackage;
 use crate::packages::Package;
 use crate::rules::mutiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::IssuesList;
+use crate::{
+    args::Args, rules::duplicated_dependency_from_root::DuplicatedDependencyFromRootIssue,
+};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::Deserialize;
@@ -83,6 +85,7 @@ pub fn collect_issues<'a>(
     issues.add(root_package.check_peer_dependencies());
     issues.add(root_package.check_optional_dependencies());
 
+    let root_dev_dependencies = root_package.get_dev_dependencies();
     let mut all_dependencies = IndexMap::new();
 
     for package in packages {
@@ -98,6 +101,17 @@ pub fn collect_issues<'a>(
         if let Some(mut dependencies) = package.get_dependencies() {
             if let Some(dev_dependencies) = package.get_dev_dependencies() {
                 dependencies.extend(dev_dependencies);
+            }
+
+            if let Some(root_dev_dependencies) = &root_dev_dependencies {
+                for name in root_dev_dependencies.keys() {
+                    if dependencies.contains_key(name) {
+                        issues.add_raw(DuplicatedDependencyFromRootIssue::new(
+                            name.clone(),
+                            package.get_path(),
+                        ));
+                    }
+                }
             }
 
             for (name, version) in dependencies {

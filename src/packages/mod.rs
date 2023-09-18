@@ -55,6 +55,10 @@ impl Package {
         &self.inner.name
     }
 
+    pub fn get_path(&self) -> String {
+        self.path.to_string_lossy().to_string()
+    }
+
     fn check_deps(
         &self,
         deps: &Option<IndexMap<String, String>>,
@@ -63,7 +67,7 @@ impl Package {
         if let Some(dependencies) = deps {
             if dependencies.is_empty() {
                 return Some(EmptyDependenciesIssue::new(
-                    self.path.to_string_lossy().to_string(),
+                    self.get_path(),
                     dependency_kind,
                 ));
             }

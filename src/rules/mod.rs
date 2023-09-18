@@ -1,6 +1,7 @@
 use colored::Colorize;
 use std::{borrow::Cow, fmt::Display};
 
+pub mod duplicated_dependency_from_root;
 pub mod empty_dependencies;
 pub mod mutiple_dependency_versions;
 pub mod root_package_dependencies;
