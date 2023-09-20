@@ -63,7 +63,14 @@ fn resolve_workspace_packages(
         for package in packages {
             if package.ends_with('*') {
                 let directory = package.trim_end_matches('*').trim_end_matches('/');
-                let packages = path.join(directory).read_dir()?;
+                let directory = path.join(directory);
+
+                let packages = match directory.read_dir() {
+                    Ok(packages) => packages,
+                    Err(error) => {
+                        return Err(anyhow!("Error while reading {:?}: {}", directory, error))
+                    }
+                };
 
                 for package in packages {
                     let package = package?;
