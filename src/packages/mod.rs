@@ -43,14 +43,17 @@ impl Package {
             return Err(anyhow!("Path {:?} is not a directory", path));
         }
 
-        let root_package = path.join("package.json");
+        let package_path = path.join("package.json");
 
-        if !root_package.is_file() {
+        if !package_path.is_file() {
             return Err(anyhow!("`package.json` not found in {:?}", path));
         }
 
-        let root_package = std::fs::read_to_string(root_package)?;
-        let package: PackageInner = serde_json::from_str(&root_package)?;
+        let root_package = std::fs::read_to_string(&package_path)?;
+        let package: PackageInner = match serde_json::from_str(&root_package) {
+            Ok(package) => package,
+            Err(err) => return Err(anyhow!("Error while parsing {:?}: {}", package_path, err)),
+        };
 
         Ok(Self {
             path,
