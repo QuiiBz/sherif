@@ -41,3 +41,29 @@ impl Issue for TypesInDependenciesIssue {
         ))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let issue = TypesInDependenciesIssue::new(
+            "test".into(),
+            vec!["@types/react".into(), "@types/react-dom".into()],
+        );
+
+        assert_eq!(issue.name(), "types-in-dependencies");
+        assert_eq!(issue.level(), IssueLevel::Error);
+
+        colored::control::set_override(false);
+        assert_eq!(
+            issue.message(),
+            "test/package.json is private but has `@types/*` dependencies in `dependencies` instead of `devDependencies`."
+        );
+        assert_eq!(
+            issue.why(),
+            "Private packages shouldn't have `@types/*` in `dependencies`: @types/react, @types/react-dom"
+        );
+    }
+}
