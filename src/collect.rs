@@ -1,6 +1,7 @@
 use crate::packages::root::RootPackage;
 use crate::packages::{Package, PackagesList};
 use crate::rules::mutiple_dependency_versions::MultipleDependencyVersionsIssue;
+use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
 use crate::rules::{BoxIssue, IssuesList};
 use crate::{args::Args, rules::packages_without_package_json};
 use anyhow::{anyhow, Result};
@@ -133,6 +134,21 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         issues.add(package.check_optional_dependencies());
 
         if let Some(mut dependencies) = package.get_dependencies() {
+            if package.is_private() {
+                let types_in_dependencies = dependencies
+                    .iter()
+                    .filter(|(name, _)| name.starts_with("@types/"))
+                    .map(|(name, _)| name.to_string())
+                    .collect::<Vec<_>>();
+
+                if !types_in_dependencies.is_empty() {
+                    issues.add_raw(TypesInDependenciesIssue::new(
+                        package.get_path(),
+                        types_in_dependencies,
+                    ));
+                }
+            }
+
             if let Some(dev_dependencies) = package.get_dev_dependencies() {
                 dependencies.extend(dev_dependencies);
             }

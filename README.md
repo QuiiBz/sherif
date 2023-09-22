@@ -106,6 +106,10 @@ The root `package.json` should specify the package manager and version to use. U
 
 The root `package.json` should be private to prevent accidentaly publishing it to a registry.
 
+#### `types-in-dependencies` ❌
+
+Private packages shouldn't have `@types/*` in `dependencies`, since they don't need it at runtime. Move them to `devDependencies`.
+
 ## Credits
 
 - [dedubcheck](https://github.com/innovatrics/dedubcheck) that given me the idea for Sherif
