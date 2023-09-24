@@ -13,10 +13,10 @@ pub enum DependencyKind {
 impl Display for DependencyKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DependencyKind::Dependencies => write!(f, "{}", "dependencies".blue()),
-            DependencyKind::DevDependencies => write!(f, "{}", "devDependencies".blue()),
-            DependencyKind::PeerDependencies => write!(f, "{}", "peerDependencies".blue()),
-            DependencyKind::OptionalDependencies => write!(f, "{}", "optionalDependencies".blue()),
+            DependencyKind::Dependencies => write!(f, "dependencies"),
+            DependencyKind::DevDependencies => write!(f, "devDependencies"),
+            DependencyKind::PeerDependencies => write!(f, "peerDependencies"),
+            DependencyKind::OptionalDependencies => write!(f, "optionalDependencies"),
         }
     }
 }
@@ -47,10 +47,16 @@ impl Issue for EmptyDependenciesIssue {
 
     fn message(&self) -> String {
         format!(
-            "{}/package.json `{}` field is empty.",
-            self.package,
-            self.dependency_kind.to_string().blue()
+            r#"  │ {{
+  {}   "{}": {}   {}
+  │ }}"#,
+            "-".red(),
+            self.dependency_kind.to_string().white(),
+            "{}".white(),
+            "← field is empty.".red(),
         )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {

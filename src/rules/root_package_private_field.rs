@@ -23,15 +23,17 @@ impl Issue for RootPackagePrivateFieldIssue {
     }
 
     fn message(&self) -> String {
-        match self.field_exists {
-            true => format!(
-                "./package.json `{}` field is set to {}, but should be {}.",
-                "private".blue(),
-                "false".red(),
-                "true".green()
-            ),
-            false => format!("./package.json is missing `{}` field.", "private".blue()),
-        }
+        format!(
+            r#"  │ {{
+  {}   "{}": "{}"   {}
+  │ }}"#,
+            "+".green(),
+            "private".white(),
+            "true".white(),
+            "← missing private field.".green(),
+        )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {

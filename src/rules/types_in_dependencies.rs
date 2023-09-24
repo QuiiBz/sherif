@@ -25,20 +25,52 @@ impl Issue for TypesInDependenciesIssue {
     }
 
     fn message(&self) -> String {
+        let before = self
+            .packages
+            .iter()
+            .map(|package| format!(r#"{}      "{}": "...""#, "-".red(), package.white()))
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let after = self
+            .packages
+            .iter()
+            .map(|package| format!(r#"{}      "{}": "...""#, "+".green(), package.white()))
+            .collect::<Vec<String>>()
+            .join("\n");
+
         format!(
-            "{}/package.json is private but has `{}` dependencies in `{}` instead of `{}`.",
-            self.package,
-            "@types/*".blue(),
-            "dependencies".red(),
-            "devDependencies".green(),
+            r#"  │ {{
+  │   "{}": "{}",     {}
+  │   ...
+  {}   "{}": {{      {}
+  {}
+  {}   }}
+  │   ...
+  {}   "{}": {{   {}
+  {}
+  {}   }}
+  │ }}"#,
+            "private".white(),
+            "true".white(),
+            "← package is private...".blue(),
+            "-".red(),
+            "dependencies".white(),
+            "← but has @types/* in dependencies...".red(),
+            before,
+            "-".red(),
+            "+".green(),
+            "devDependencies".white(),
+            "← instead of devDependencies.".green(),
+            after,
+            "+".green(),
         )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Owned(format!(
-            "Private packages shouldn't have `@types/*` in `dependencies`: {}",
-            self.packages.join(", ")
-        ))
+        Cow::Borrowed("Private packages shouldn't have @types/* in dependencies.")
     }
 }
 

@@ -22,9 +22,15 @@ impl Issue for RootPackageManagerFieldIssue {
 
     fn message(&self) -> String {
         format!(
-            "./package.json is missing `{}` field.",
-            "packageManager".blue(),
+            r#"  │ {{
+  {}   "{}": "..."   {}
+  │ }}"#,
+            "+".green(),
+            "packageManager".white(),
+            "← missing packageManager field.".green(),
         )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {

@@ -1,4 +1,5 @@
 use colored::Colorize;
+use indexmap::IndexMap;
 use std::{borrow::Cow, fmt::Display};
 
 pub mod empty_dependencies;
@@ -48,40 +49,51 @@ pub trait Issue {
     fn level(&self) -> IssueLevel;
     fn message(&self) -> String;
     fn why(&self) -> Cow<'static, str>;
-
-    fn to_packages_without_package_json_issue(
-        &mut self,
-    ) -> Option<&mut packages_without_package_json::PackagesWithoutPackageJsonIssue> {
-        None
-    }
 }
 
 pub type BoxIssue = Box<dyn Issue>;
 
+#[derive(Hash, PartialEq, Eq, Clone)]
+pub enum PackageType {
+    None,
+    Root,
+    Package(String),
+}
+
+impl Display for PackageType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PackageType::None => write!(f, "./"),
+            PackageType::Root => write!(f, "./package.json"),
+            PackageType::Package(name) => write!(f, "{}/package.json", name),
+        }
+    }
+}
+
 pub struct IssuesList<'a> {
     ignored_issues: &'a Vec<String>,
-    issues: Vec<BoxIssue>,
+    issues: IndexMap<PackageType, Vec<BoxIssue>>,
 }
 
 impl<'a> IssuesList<'a> {
     pub fn new(ignored_issues: &'a Vec<String>) -> Self {
         Self {
             ignored_issues,
-            issues: Vec::new(),
+            issues: IndexMap::new(),
         }
     }
 
-    pub fn add_raw(&mut self, issue: BoxIssue) {
+    pub fn add_raw(&mut self, package_type: PackageType, issue: BoxIssue) {
         if self.ignored_issues.contains(&issue.name().to_string()) {
             return;
         }
 
-        self.issues.push(issue);
+        self.issues.entry(package_type).or_default().push(issue);
     }
 
-    pub fn add(&mut self, issue: Option<BoxIssue>) {
+    pub fn add(&mut self, package_type: PackageType, issue: Option<BoxIssue>) {
         if let Some(issue) = issue {
-            self.add_raw(issue);
+            self.add_raw(package_type, issue);
         }
     }
 
@@ -90,16 +102,19 @@ impl<'a> IssuesList<'a> {
     }
 
     pub fn len_by_level(&self, level: IssueLevel) -> usize {
-        self.issues
-            .iter()
-            .filter(|issue| issue.level() == level)
-            .count()
+        // self.issues
+        //     .values()
+        //     .into_iter()
+        //     .for_each()
+        //     .filter(|issue| issue.level() == level)
+        //     .count()
+        0
     }
 }
 
 impl IntoIterator for IssuesList<'_> {
-    type Item = BoxIssue;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type Item = (PackageType, Vec<BoxIssue>);
+    type IntoIter = indexmap::map::IntoIter<PackageType, Vec<BoxIssue>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.issues.into_iter()

@@ -30,20 +30,25 @@ pub fn print_header(
 }
 
 pub fn print_issues(issues: IssuesList) {
-    for issue in issues {
-        let pad = " ".repeat(issue.level().as_str().len());
-
+    for (package_type, issues) in issues {
         println!();
         println!(
-            " {} {}",
-            issue.level().to_string().bold(),
-            issue.message().bold()
+            "{} found in {}:",
+            "issue".plural(issues.len()),
+            package_type.to_string().bold(),
         );
-        println!(
-            "{}{}",
-            pad,
-            format!("{}: {}", issue.name(), issue.why()).bright_black(),
-        );
+
+        for issue in issues {
+            let pad = " ".repeat(issue.level().as_str().len());
+
+            println!();
+            println!(
+                " {} {}",
+                issue.level().to_string().bold(),
+                issue.why().bold()
+            );
+            println!("{}", issue.message());
+        }
     }
 }
 

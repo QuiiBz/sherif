@@ -1,13 +1,14 @@
 use crate::packages::root::RootPackage;
 use crate::packages::{Package, PackagesList};
 use crate::rules::mutiple_dependency_versions::MultipleDependencyVersionsIssue;
+use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
 use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
-use crate::rules::{BoxIssue, IssuesList};
+use crate::rules::{BoxIssue, IssuesList, PackageType};
 use crate::{args::Args, rules::packages_without_package_json};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::Deserialize;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 const PNPM_WORKSPACE: &str = "pnpm-workspace.yaml";
 
@@ -16,20 +17,18 @@ struct PnpmWorkspace {
     packages: Vec<String>,
 }
 
-fn resolve_workspace_packages(
-    path: &Path,
-    package_root_workspaces: Option<Vec<String>>,
-) -> Result<(Vec<Package>, Vec<BoxIssue>)> {
-    let mut all_packages = Vec::new();
-    let mut packages_list = package_root_workspaces;
+pub fn collect_packages(args: &Args) -> Result<PackagesList> {
+    let root_package = RootPackage::new(&args.path)?;
+    let mut packages = Vec::new();
+    let mut packages_list = root_package.get_workspaces();
 
     if packages_list.is_none() {
-        let pnpm_workspace = path.join(PNPM_WORKSPACE);
+        let pnpm_workspace = args.path.join(PNPM_WORKSPACE);
 
         if !pnpm_workspace.is_file() {
             return Err(anyhow!(
                     "No `workspaces` field in the root `package.json`, or `pnpm-workspace.yaml` file not found in {:?}",
-                    path
+                    args.path
                 ));
         }
 
@@ -42,20 +41,12 @@ fn resolve_workspace_packages(
     let mut packages_issues: Vec<BoxIssue> = Vec::new();
 
     let mut add_package = |path: PathBuf| match Package::new(path.clone()) {
-        Ok(package) => all_packages.push(package),
+        Ok(package) => packages.push(package),
         Err(error) => {
             if error.to_string().contains("package.json") {
-                if packages_issues.is_empty() {
-                    packages_issues.push(Box::new(
-                        packages_without_package_json::PackagesWithoutPackageJsonIssue::new(),
-                    ));
-                }
-
-                packages_issues.iter_mut().for_each(|issue| {
-                    if let Some(issue) = issue.to_packages_without_package_json_issue() {
-                        issue.add_package(path.to_string_lossy().to_string());
-                    }
-                });
+                packages_issues.push(PackagesWithoutPackageJsonIssue::new(
+                    path.to_string_lossy().to_string(),
+                ));
             }
         }
     };
@@ -64,7 +55,7 @@ fn resolve_workspace_packages(
         for package in packages {
             if package.ends_with('*') {
                 let directory = package.trim_end_matches('*').trim_end_matches('/');
-                let directory = path.join(directory);
+                let directory = args.path.join(directory);
 
                 let packages = match directory.read_dir() {
                     Ok(packages) => packages,
@@ -81,18 +72,10 @@ fn resolve_workspace_packages(
                     }
                 }
             } else {
-                add_package(path.join(package));
+                add_package(args.path.join(package));
             }
         }
     }
-
-    Ok((all_packages, packages_issues))
-}
-
-pub fn collect_packages(args: &Args) -> Result<PackagesList> {
-    let root_package = RootPackage::new(&args.path)?;
-    let (packages, packages_issues) =
-        resolve_workspace_packages(&args.path, root_package.get_workspaces())?;
 
     Ok(PackagesList {
         root_package,
@@ -111,15 +94,18 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     } = packages_list;
 
     for package_issue in packages_issues {
-        issues.add_raw(package_issue);
+        issues.add_raw(PackageType::None, package_issue);
     }
 
-    issues.add(root_package.check_private());
-    issues.add(root_package.check_package_manager());
-    issues.add(root_package.check_dependencies());
-    issues.add(root_package.check_dev_dependencies());
-    issues.add(root_package.check_peer_dependencies());
-    issues.add(root_package.check_optional_dependencies());
+    issues.add(PackageType::Root, root_package.check_private());
+    issues.add(PackageType::Root, root_package.check_package_manager());
+    issues.add(PackageType::Root, root_package.check_dependencies());
+    issues.add(PackageType::Root, root_package.check_dev_dependencies());
+    issues.add(PackageType::Root, root_package.check_peer_dependencies());
+    issues.add(
+        PackageType::Root,
+        root_package.check_optional_dependencies(),
+    );
 
     let mut all_dependencies = IndexMap::new();
 
@@ -128,10 +114,12 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
             continue;
         }
 
-        issues.add(package.check_dependencies());
-        issues.add(package.check_dev_dependencies());
-        issues.add(package.check_peer_dependencies());
-        issues.add(package.check_optional_dependencies());
+        let package_type = PackageType::Package(package.get_path());
+
+        issues.add(package_type.clone(), package.check_dependencies());
+        issues.add(package_type.clone(), package.check_dev_dependencies());
+        issues.add(package_type.clone(), package.check_peer_dependencies());
+        issues.add(package_type.clone(), package.check_optional_dependencies());
 
         if let Some(mut dependencies) = package.get_dependencies() {
             if package.is_private() {
@@ -142,10 +130,10 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                     .collect::<Vec<_>>();
 
                 if !types_in_dependencies.is_empty() {
-                    issues.add_raw(TypesInDependenciesIssue::new(
-                        package.get_path(),
-                        types_in_dependencies,
-                    ));
+                    issues.add_raw(
+                        package_type.clone(),
+                        TypesInDependenciesIssue::new(package.get_path(), types_in_dependencies),
+                    );
                 }
             }
 
@@ -164,15 +152,16 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
     }
 
-    for (name, versions) in all_dependencies {
-        if versions.len() > 1 && !versions.windows(2).all(|window| window[0] == window[1]) {
-            let ignored = args.ignore_dependency.contains(&name);
-
-            issues.add_raw(MultipleDependencyVersionsIssue::new(
-                name, versions, ignored,
-            ));
-        }
-    }
+    // for (name, versions) in all_dependencies {
+    //     if versions.len() > 1 && !versions.windows(2).all(|window| window[0] == window[1]) {
+    //         let ignored = args.ignore_dependency.contains(&name);
+    //
+    //         issues.add_raw(
+    //             PackageType::None,
+    //             MultipleDependencyVersionsIssue::new(name, versions, ignored),
+    //         );
+    //     }
+    // }
 
     issues
 }
