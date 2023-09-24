@@ -152,16 +152,18 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
     }
 
-    // for (name, versions) in all_dependencies {
-    //     if versions.len() > 1 && !versions.windows(2).all(|window| window[0] == window[1]) {
-    //         let ignored = args.ignore_dependency.contains(&name);
-    //
-    //         issues.add_raw(
-    //             PackageType::None,
-    //             MultipleDependencyVersionsIssue::new(name, versions, ignored),
-    //         );
-    //     }
-    // }
+    for (name, versions) in all_dependencies {
+        if versions.len() > 1 && !versions.windows(2).all(|window| window[0] == window[1]) {
+            let ignored = args.ignore_dependency.contains(&name);
+
+            if !ignored {
+                issues.add_raw(
+                    PackageType::None,
+                    MultipleDependencyVersionsIssue::new(name, versions),
+                );
+            }
+        }
+    }
 
     issues
 }

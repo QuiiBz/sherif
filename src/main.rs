@@ -40,9 +40,8 @@ fn main() {
 
     let warnings = issues.len_by_level(IssueLevel::Warning);
     let errors = issues.len_by_level(IssueLevel::Error);
-    let ignored = issues.len_by_level(IssueLevel::Ignored);
 
-    print_header(total_issues, total_packages, warnings, errors, ignored);
+    print_header(total_issues, total_packages, warnings, errors);
     print_issues(issues);
 
     if errors > 0 {

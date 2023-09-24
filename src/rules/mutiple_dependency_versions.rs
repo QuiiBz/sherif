@@ -20,11 +20,10 @@ const DEFAULT_COMPARATOR: Comparator = Comparator {
 pub struct MultipleDependencyVersionsIssue {
     name: String,
     versions: Vec<VersionReq>,
-    ignored: bool,
 }
 
 impl MultipleDependencyVersionsIssue {
-    pub fn new(name: String, mut versions: Vec<VersionReq>, ignored: bool) -> Box<Self> {
+    pub fn new(name: String, mut versions: Vec<VersionReq>) -> Box<Self> {
         versions.sort_by(|a, b| {
             let a_comparator = a.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
             let b_comparator = b.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
@@ -51,11 +50,7 @@ impl MultipleDependencyVersionsIssue {
 
         versions.dedup();
 
-        Box::new(Self {
-            name,
-            versions,
-            ignored,
-        })
+        Box::new(Self { name, versions })
     }
 }
 
@@ -65,30 +60,19 @@ impl Issue for MultipleDependencyVersionsIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        match self.ignored {
-            true => IssueLevel::Ignored,
-            false => IssueLevel::Error,
-        }
+        IssueLevel::Error
     }
 
     fn message(&self) -> String {
         let lowest_version = extract_version(self.versions.first());
         let highest_version = extract_version(self.versions.last());
 
-        match self.ignored {
-            true => format!(
-                "The `{}` dependency has multiple versions, {} being the lowest and {} the highest.",
-                self.name,
-                lowest_version,
-                highest_version,
-            ).bright_black().to_string(),
-            false => format!(
-                "The `{}` dependency has multiple versions, {} being the lowest and {} the highest.",
-                self.name.blue(),
-                lowest_version.red(),
-                highest_version.green(),
-            )
-        }
+        format!(
+            "The `{}` dependency has multiple versions, {} being the lowest and {} the highest.",
+            self.name.blue(),
+            lowest_version.red(),
+            highest_version.green(),
+        )
     }
 
     fn why(&self) -> Cow<'static, str> {

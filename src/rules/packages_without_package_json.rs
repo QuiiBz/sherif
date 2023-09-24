@@ -22,7 +22,7 @@ impl Issue for PackagesWithoutPackageJsonIssue {
     }
 
     fn message(&self) -> String {
-        format!("  {}/package.json doesn't exists.", self.package)
+        format!("   {}/package.json doesn't exists.", self.package)
     }
 
     fn why(&self) -> Cow<'static, str> {

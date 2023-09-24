@@ -12,14 +12,12 @@ pub mod types_in_dependencies;
 
 pub const ERROR: &str = "⨯";
 pub const WARNING: &str = "⚠️";
-pub const IGNORED: &str = "⊙";
 pub const SUCCESS: &str = "✓";
 
 #[derive(Debug, PartialEq)]
 pub enum IssueLevel {
     Error,
     Warning,
-    Ignored,
 }
 
 impl IssueLevel {
@@ -27,7 +25,6 @@ impl IssueLevel {
         match self {
             IssueLevel::Error => "⨯ error",
             IssueLevel::Warning => "⚠️ warning",
-            IssueLevel::Ignored => "⊙ ignored",
         }
     }
 }
@@ -39,7 +36,6 @@ impl Display for IssueLevel {
         match self {
             IssueLevel::Error => write!(f, "{}", value.red()),
             IssueLevel::Warning => write!(f, "{}", value.yellow()),
-            IssueLevel::Ignored => write!(f, "{}", value.bright_black()),
         }
     }
 }
