@@ -1,55 +1,17 @@
 use super::{Issue, IssueLevel};
-use crate::plural::Pluralize;
 use colored::Colorize;
-use semver::{Comparator, Op, Prerelease, VersionReq};
-use std::{borrow::Cow, cmp::Ordering};
-
-fn extract_version(version: Option<&VersionReq>) -> String {
-    version.map_or("x.x.x".to_string(), |version| version.to_string())
-}
-
-const DEFAULT_COMPARATOR: Comparator = Comparator {
-    op: Op::Exact,
-    major: 0,
-    minor: None,
-    patch: None,
-    pre: Prerelease::EMPTY,
-};
+use indexmap::IndexMap;
+use semver::VersionReq;
+use std::borrow::Cow;
 
 #[derive(Debug)]
 pub struct MultipleDependencyVersionsIssue {
     name: String,
-    versions: Vec<VersionReq>,
+    versions: IndexMap<String, VersionReq>,
 }
 
 impl MultipleDependencyVersionsIssue {
-    pub fn new(name: String, mut versions: Vec<VersionReq>) -> Box<Self> {
-        versions.sort_by(|a, b| {
-            let a_comparator = a.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
-            let b_comparator = b.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
-
-            let mut ordering = Ordering::Equal;
-
-            ordering = match a_comparator.patch.cmp(&b_comparator.patch) {
-                Ordering::Equal => ordering,
-                ordering => ordering,
-            };
-
-            ordering = match a_comparator.minor.cmp(&b_comparator.minor) {
-                Ordering::Equal => ordering,
-                ordering => ordering,
-            };
-
-            ordering = match a_comparator.major.cmp(&b_comparator.major) {
-                Ordering::Equal => ordering,
-                ordering => ordering,
-            };
-
-            ordering
-        });
-
-        versions.dedup();
-
+    pub fn new(name: String, versions: IndexMap<String, VersionReq>) -> Box<Self> {
         Box::new(Self { name, versions })
     }
 }
@@ -64,30 +26,57 @@ impl Issue for MultipleDependencyVersionsIssue {
     }
 
     fn message(&self) -> String {
-        let lowest_version = extract_version(self.versions.first());
-        let highest_version = extract_version(self.versions.last());
+        let mut group = vec![];
 
-        format!(
-            "The `{}` dependency has multiple versions, {} being the lowest and {} the highest.",
-            self.name.blue(),
-            lowest_version.red(),
-            highest_version.green(),
-        )
+        self.versions
+            .iter()
+            .map(|(package, version)| {
+                let mut common_path = package.split('/').collect::<Vec<_>>();
+                let end = common_path.pop().unwrap();
+
+                let (version, indicator) = if version == self.versions.last().unwrap().1 {
+                    (version.to_string().green(), "⬆️ highest".green())
+                } else if version == self.versions.first().unwrap().1 {
+                    (version.to_string().red(), "⬇️ lowest".red())
+                } else {
+                    (version.to_string().yellow(), "∼ between".yellow())
+                };
+
+                let version_pad = " ".repeat(if end.len() > 16 { 3 } else { 16 - end.len() });
+
+                if group.is_empty() || group != common_path {
+                    let root = common_path.join("/").bright_black();
+                    group = common_path;
+
+                    return format!(
+                        "  {}
+      {}{}{}   {}",
+                        root,
+                        end.bright_black(),
+                        version_pad,
+                        version,
+                        indicator
+                    );
+                }
+
+                group = common_path;
+
+                format!(
+                    "      {}{}{}   {}",
+                    end.bright_black(),
+                    version_pad,
+                    version,
+                    indicator
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     fn why(&self) -> Cow<'static, str> {
-        let versions = self
-            .versions
-            .iter()
-            .map(|v| v.to_string())
-            .collect::<Vec<String>>();
-        let total_versions = self.versions.len();
-
         Cow::Owned(format!(
-            "{} has {}: {}",
-            self.name,
-            "version".plural(total_versions),
-            versions.join(", ")
+            "Dependency {} has multiple versions defined in the workspace.",
+            self.name
         ))
     }
 }

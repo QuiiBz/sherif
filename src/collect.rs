@@ -145,18 +145,26 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                 if !version.comparators.is_empty() {
                     all_dependencies
                         .entry(name)
-                        .or_insert_with(Vec::new)
-                        .push(version);
+                        .or_insert_with(IndexMap::new)
+                        .insert(package.get_path(), version);
                 }
             }
         }
     }
 
-    for (name, versions) in all_dependencies {
-        if versions.len() > 1 && !versions.windows(2).all(|window| window[0] == window[1]) {
+    for (name, mut versions) in all_dependencies {
+        if versions.len() > 1
+            && !versions
+                .values()
+                .collect::<Vec<_>>()
+                .windows(2)
+                .all(|window| window[0] == window[1])
+        {
             let ignored = args.ignore_dependency.contains(&name);
 
             if !ignored {
+                versions.sort_keys();
+
                 issues.add_raw(
                     PackageType::None,
                     MultipleDependencyVersionsIssue::new(name, versions),

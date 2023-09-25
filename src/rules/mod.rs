@@ -94,17 +94,15 @@ impl<'a> IssuesList<'a> {
     }
 
     pub fn total_len(&self) -> usize {
-        self.issues.len()
+        self.issues.values().flatten().collect::<Vec<_>>().len()
     }
 
     pub fn len_by_level(&self, level: IssueLevel) -> usize {
-        // self.issues
-        //     .values()
-        //     .into_iter()
-        //     .for_each()
-        //     .filter(|issue| issue.level() == level)
-        //     .count()
-        0
+        self.issues
+            .values()
+            .flatten()
+            .filter(|issue| issue.level() == level)
+            .count()
     }
 }
 
