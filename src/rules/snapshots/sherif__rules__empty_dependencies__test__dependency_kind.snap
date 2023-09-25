@@ -1,0 +1,7 @@
+---
+source: src/rules/empty_dependencies.rs
+expression: issue.message()
+---
+  │ {
+  -   "dependencies": {}   ← field is empty.
+  │ }

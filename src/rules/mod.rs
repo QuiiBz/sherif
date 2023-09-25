@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use std::{borrow::Cow, fmt::Display};
 
 pub mod empty_dependencies;
-pub mod mutiple_dependency_versions;
+pub mod multiple_dependency_versions;
 pub mod packages_without_package_json;
 pub mod root_package_dependencies;
 pub mod root_package_manager_field;
@@ -128,13 +128,13 @@ mod test {
         let ignored_issues = Vec::new();
         let mut issues = IssuesList::new(&ignored_issues);
 
-        issues.add(Some(RootPackageManagerFieldIssue::new()));
+        issues.add(PackageType::Root, Some(RootPackageManagerFieldIssue::new()));
         assert_eq!(issues.total_len(), 1);
 
-        issues.add_raw(RootPackageManagerFieldIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageManagerFieldIssue::new());
         assert_eq!(issues.total_len(), 2);
 
-        issues.add(None);
+        issues.add(PackageType::Root, None);
         assert_eq!(issues.total_len(), 2);
     }
 
@@ -143,10 +143,10 @@ mod test {
         let ignored_issues = vec!["root-package-manager-field".to_string()];
         let mut issues = IssuesList::new(&ignored_issues);
 
-        issues.add_raw(RootPackageManagerFieldIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageManagerFieldIssue::new());
         assert_eq!(issues.total_len(), 0);
 
-        issues.add_raw(RootPackageDependenciesIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageDependenciesIssue::new());
         assert_eq!(issues.total_len(), 1);
     }
 
@@ -155,13 +155,12 @@ mod test {
         let ignored_issues = Vec::new();
         let mut issues = IssuesList::new(&ignored_issues);
 
-        issues.add_raw(RootPackageManagerFieldIssue::new());
-        issues.add_raw(RootPackageDependenciesIssue::new());
-        issues.add_raw(RootPackageDependenciesIssue::new());
-        issues.add_raw(RootPackageDependenciesIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageManagerFieldIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageDependenciesIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageDependenciesIssue::new());
+        issues.add_raw(PackageType::Root, RootPackageDependenciesIssue::new());
 
         assert_eq!(issues.len_by_level(IssueLevel::Error), 1);
         assert_eq!(issues.len_by_level(IssueLevel::Warning), 3);
-        assert_eq!(issues.len_by_level(IssueLevel::Ignored), 0);
     }
 }

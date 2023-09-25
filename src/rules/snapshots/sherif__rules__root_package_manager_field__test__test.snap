@@ -1,0 +1,7 @@
+---
+source: src/rules/root_package_manager_field.rs
+expression: issue.message()
+---
+  │ {
+  +   "packageManager": "..."   ← missing packageManager field.
+  │ }

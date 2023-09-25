@@ -1,0 +1,7 @@
+---
+source: src/rules/root_package_private_field.rs
+expression: issue.message()
+---
+  │ {
+  +   "private": "true"   ← missing private field.
+  │ }

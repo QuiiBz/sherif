@@ -1,10 +1,10 @@
+use crate::args::Args;
 use crate::packages::root::RootPackage;
 use crate::packages::{Package, PackagesList};
-use crate::rules::mutiple_dependency_versions::MultipleDependencyVersionsIssue;
+use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
 use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
 use crate::rules::{BoxIssue, IssuesList, PackageType};
-use crate::{args::Args, rules::packages_without_package_json};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::Deserialize;
@@ -44,6 +44,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
         Ok(package) => packages.push(package),
         Err(error) => {
             if error.to_string().contains("package.json") {
+                println!("push");
                 packages_issues.push(PackagesWithoutPackageJsonIssue::new(
                     path.to_string_lossy().to_string(),
                 ));
@@ -132,7 +133,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                 if !types_in_dependencies.is_empty() {
                     issues.add_raw(
                         package_type.clone(),
-                        TypesInDependenciesIssue::new(package.get_path(), types_in_dependencies),
+                        TypesInDependenciesIssue::new(types_in_dependencies),
                     );
                 }
             }
@@ -301,13 +302,9 @@ mod test {
 
         assert_eq!(root_package.get_name(), "without-package-json");
         assert_eq!(packages.len(), 1);
-        assert_eq!(packages_issues.len(), 1);
-
-        colored::control::set_override(false);
-        assert_eq!(
-            packages_issues[0].message(),
-            "2 packages doesn't have a package.json file: fixtures/without-package-json/packages/abc, fixtures/without-package-json/docs"
-        );
+        assert_eq!(packages_issues.len(), 2);
+        assert_eq!(packages_issues[0].name(), "packages-without-package-json");
+        assert_eq!(packages_issues[1].name(), "packages-without-package-json");
     }
 
     #[test]
@@ -323,13 +320,25 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "root-issues");
 
         let issues = collect_issues(&args, packages_list);
-        let issues = issues.into_iter().collect::<Vec<_>>();
+        assert_eq!(issues.total_len(), 4);
 
-        assert_eq!(issues.len(), 4);
-        assert_eq!(issues[0].name(), "root-package-private-field");
-        assert_eq!(issues[1].name(), "root-package-manager-field");
-        assert_eq!(issues[2].name(), "root-package-dependencies");
-        assert_eq!(issues[3].name(), "empty-dependencies");
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+        assert_eq!(
+            issues.get(&PackageType::Root).unwrap()[0].name(),
+            "root-package-private-field"
+        );
+        assert_eq!(
+            issues.get(&PackageType::Root).unwrap()[1].name(),
+            "root-package-manager-field"
+        );
+        assert_eq!(
+            issues.get(&PackageType::Root).unwrap()[2].name(),
+            "root-package-dependencies"
+        );
+        assert_eq!(
+            issues.get(&PackageType::Root).unwrap()[3].name(),
+            "empty-dependencies"
+        );
     }
 
     #[test]
@@ -345,9 +354,7 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "root-issues-fixed");
 
         let issues = collect_issues(&args, packages_list);
-        let issues = issues.into_iter().collect::<Vec<_>>();
-
-        assert_eq!(issues.len(), 0);
+        assert_eq!(issues.total_len(), 0);
     }
 
     #[test]
@@ -362,13 +369,19 @@ mod test {
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
-        colored::control::set_override(false);
         let issues = collect_issues(&args, packages_list);
-        let issues = issues.into_iter().collect::<Vec<_>>();
+        assert_eq!(issues.total_len(), 2);
 
-        assert_eq!(issues.len(), 2);
-        assert_eq!(issues[0].message(), "The `next` dependency has multiple versions, ^1.2.3 being the lowest and ^4.5.6 the highest.".to_string());
-        assert_eq!(issues[1].message(), "The `react` dependency has multiple versions, ^1.2.3 being the lowest and ^4.5.6 the highest.".to_string());
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[0].name(),
+            "multiple-dependency-versions"
+        );
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[1].name(),
+            "multiple-dependency-versions"
+        );
     }
 
     #[test]
@@ -383,11 +396,14 @@ mod test {
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies-star");
 
-        colored::control::set_override(false);
         let issues = collect_issues(&args, packages_list);
-        let issues = issues.into_iter().collect::<Vec<_>>();
+        assert_eq!(issues.total_len(), 1);
 
-        assert_eq!(issues.len(), 1);
-        assert_eq!(issues[0].message(), "The `next` dependency has multiple versions, ^1.2.3 being the lowest and ^4.5.6 the highest.".to_string());
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[0].name(),
+            "multiple-dependency-versions"
+        );
     }
 }

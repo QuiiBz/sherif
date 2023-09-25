@@ -68,9 +68,10 @@ mod test {
         assert_eq!(issue.level(), IssueLevel::Warning);
 
         colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
         assert_eq!(
-            issue.message(),
-            "./package.json shouldn't have any `dependencies` , only `devDependencies`."
+            issue.why(),
+            "The root package.json is private and should only have devDependencies. Declare dependencies in each package."
         );
     }
 }

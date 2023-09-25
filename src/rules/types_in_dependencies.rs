@@ -1,17 +1,15 @@
-use colored::Colorize;
-
 use super::{Issue, IssueLevel};
+use colored::Colorize;
 use std::borrow::Cow;
 
 #[derive(Debug)]
 pub struct TypesInDependenciesIssue {
-    package: String,
     packages: Vec<String>,
 }
 
 impl TypesInDependenciesIssue {
-    pub fn new(package: String, packages: Vec<String>) -> Box<Self> {
-        Box::new(Self { package, packages })
+    pub fn new(packages: Vec<String>) -> Box<Self> {
+        Box::new(Self { packages })
     }
 }
 
@@ -80,22 +78,17 @@ mod test {
 
     #[test]
     fn test() {
-        let issue = TypesInDependenciesIssue::new(
-            "test".into(),
-            vec!["@types/react".into(), "@types/react-dom".into()],
-        );
+        let issue =
+            TypesInDependenciesIssue::new(vec!["@types/react".into(), "@types/react-dom".into()]);
 
         assert_eq!(issue.name(), "types-in-dependencies");
         assert_eq!(issue.level(), IssueLevel::Error);
 
         colored::control::set_override(false);
-        assert_eq!(
-            issue.message(),
-            "test/package.json is private but has `@types/*` dependencies in `dependencies` instead of `devDependencies`."
-        );
+        insta::assert_snapshot!(issue.message());
         assert_eq!(
             issue.why(),
-            "Private packages shouldn't have `@types/*` in `dependencies`: @types/react, @types/react-dom"
+            "Private packages shouldn't have @types/* in dependencies."
         );
     }
 }

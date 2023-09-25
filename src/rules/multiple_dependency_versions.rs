@@ -86,86 +86,65 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_extract_version() {
-        assert_eq!(extract_version(None), "x.x.x");
-        assert_eq!(
-            extract_version(Some(&VersionReq::parse("1.2.3").unwrap())),
-            "^1.2.3"
-        );
-        assert_eq!(
-            extract_version(Some(&VersionReq::parse("^1.2.3").unwrap())),
-            "^1.2.3"
-        );
-    }
-
-    #[test]
     fn test() {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
-            vec![
-                VersionReq::parse("1.2.3").unwrap(),
-                VersionReq::parse("1.2.4").unwrap(),
-                VersionReq::parse("1.2.5").unwrap(),
-            ],
-            false,
+            indexmap::indexmap! {
+                "packages/package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+                "packages/package-b".into() => VersionReq::parse("1.2.4").unwrap(),
+                "package-c".into() => VersionReq::parse("1.2.5").unwrap(),
+            },
         );
 
         assert_eq!(issue.name(), "multiple-dependency-versions");
         assert_eq!(issue.level(), IssueLevel::Error);
         assert_eq!(issue.versions.len(), 3);
-        assert!(!issue.ignored);
+        assert_eq!(
+            issue.why(),
+            "Dependency test has multiple versions defined in the workspace.".to_string()
+        );
     }
 
     #[test]
     fn order_single() {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
-            vec![VersionReq::parse("1.2.3").unwrap()],
-            false,
+            indexmap::indexmap! {
+                "package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+            },
         );
 
         colored::control::set_override(false);
-        assert_eq!(issue.message(), "The `test` dependency has multiple versions, ^1.2.3 being the lowest and ^1.2.3 the highest.");
-        assert_eq!(issue.why(), "test has 1 version: ^1.2.3".to_string());
+        insta::assert_snapshot!(issue.message());
     }
 
     #[test]
     fn order_multiple() {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
-            vec![
-                VersionReq::parse("5.6.3").unwrap(),
-                VersionReq::parse("1.2.3").unwrap(),
-                VersionReq::parse("3.1.6").unwrap(),
-            ],
-            false,
+            indexmap::indexmap! {
+                "apps/package-a".into() => VersionReq::parse("5.6.3").unwrap(),
+                "apps/package-b".into() => VersionReq::parse("1.2.3").unwrap(),
+                "packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
+            },
         );
 
         colored::control::set_override(false);
-        assert_eq!(issue.message(), "The `test` dependency has multiple versions, ^1.2.3 being the lowest and ^5.6.3 the highest.");
-        assert_eq!(
-            issue.why(),
-            "test has 3 versions: ^1.2.3, ^3.1.6, ^5.6.3".to_string()
-        );
+        insta::assert_snapshot!(issue.message());
     }
 
     #[test]
     fn dedupe() {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
-            vec![
-                VersionReq::parse("1.2.3").unwrap(),
-                VersionReq::parse("3.1.6").unwrap(),
-                VersionReq::parse("3.1.6").unwrap(),
-            ],
-            false,
+            indexmap::indexmap! {
+                "package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+                "packages/package-b".into() => VersionReq::parse("3.1.6").unwrap(),
+                "packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
+            },
         );
 
         colored::control::set_override(false);
-        assert_eq!(issue.message(), "The `test` dependency has multiple versions, ^1.2.3 being the lowest and ^3.1.6 the highest.");
-        assert_eq!(
-            issue.why(),
-            "test has 2 versions: ^1.2.3, ^3.1.6".to_string()
-        );
+        insta::assert_snapshot!(issue.message());
     }
 }

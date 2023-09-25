@@ -3,13 +3,11 @@ use colored::Colorize;
 use std::borrow::Cow;
 
 #[derive(Debug)]
-pub struct RootPackagePrivateFieldIssue {
-    field_exists: bool,
-}
+pub struct RootPackagePrivateFieldIssue;
 
 impl RootPackagePrivateFieldIssue {
-    pub fn new(field_exists: bool) -> Box<Self> {
-        Box::new(Self { field_exists })
+    pub fn new() -> Box<Self> {
+        Box::new(Self)
     }
 }
 
@@ -47,7 +45,7 @@ mod test {
 
     #[test]
     fn test() {
-        let issue = RootPackagePrivateFieldIssue::new(true);
+        let issue = RootPackagePrivateFieldIssue::new();
 
         assert_eq!(issue.name(), "root-package-private-field");
         assert_eq!(issue.level(), IssueLevel::Error);
@@ -55,23 +53,20 @@ mod test {
 
     #[test]
     fn private_field_not_set() {
-        let issue = RootPackagePrivateFieldIssue::new(false);
+        let issue = RootPackagePrivateFieldIssue::new();
 
         colored::control::set_override(false);
-        assert_eq!(
-            issue.message(),
-            "./package.json is missing `private` field."
-        );
+        insta::assert_snapshot!(issue.message());
+
+        assert_eq!(issue.why(), "The root package.json should be private to prevent accidentaly publishing it to a registry.");
     }
 
     #[test]
     fn private_field_set_not_true() {
-        let issue = RootPackagePrivateFieldIssue::new(true);
+        let issue = RootPackagePrivateFieldIssue::new();
 
         colored::control::set_override(false);
-        assert_eq!(
-            issue.message(),
-            "./package.json `private` field is set to false, but should be true."
-        );
+        insta::assert_snapshot!(issue.message());
+        assert_eq!(issue.why(), "The root package.json should be private to prevent accidentaly publishing it to a registry.");
     }
 }

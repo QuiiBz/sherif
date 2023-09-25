@@ -23,16 +23,12 @@ impl Display for DependencyKind {
 
 #[derive(Debug)]
 pub struct EmptyDependenciesIssue {
-    package: String,
     dependency_kind: DependencyKind,
 }
 
 impl EmptyDependenciesIssue {
-    pub fn new(package: String, dependency_kind: DependencyKind) -> Box<Self> {
-        Box::new(Self {
-            package,
-            dependency_kind,
-        })
+    pub fn new(dependency_kind: DependencyKind) -> Box<Self> {
+        Box::new(Self { dependency_kind })
     }
 }
 
@@ -70,41 +66,30 @@ mod test {
 
     #[test]
     fn test() {
-        let issue = EmptyDependenciesIssue::new("test".to_string(), DependencyKind::Dependencies);
+        let issue = EmptyDependenciesIssue::new(DependencyKind::Dependencies);
 
         assert_eq!(issue.name(), "empty-dependencies");
         assert_eq!(issue.level(), IssueLevel::Error);
+        assert_eq!(
+            issue.why(),
+            "package.json should not have empty dependencies fields."
+        );
     }
 
     #[test]
     fn test_dependency_kind() {
         colored::control::set_override(false);
 
-        let issue = EmptyDependenciesIssue::new("test".to_string(), DependencyKind::Dependencies);
-        assert_eq!(
-            issue.message(),
-            "test/package.json `dependencies` field is empty."
-        );
+        let issue = EmptyDependenciesIssue::new(DependencyKind::Dependencies);
+        insta::assert_snapshot!(issue.message());
 
-        let issue =
-            EmptyDependenciesIssue::new("test".to_string(), DependencyKind::DevDependencies);
-        assert_eq!(
-            issue.message(),
-            "test/package.json `devDependencies` field is empty."
-        );
+        let issue = EmptyDependenciesIssue::new(DependencyKind::DevDependencies);
+        insta::assert_snapshot!(issue.message());
 
-        let issue =
-            EmptyDependenciesIssue::new("test".to_string(), DependencyKind::PeerDependencies);
-        assert_eq!(
-            issue.message(),
-            "test/package.json `peerDependencies` field is empty."
-        );
+        let issue = EmptyDependenciesIssue::new(DependencyKind::PeerDependencies);
+        insta::assert_snapshot!(issue.message());
 
-        let issue =
-            EmptyDependenciesIssue::new("test".to_string(), DependencyKind::OptionalDependencies);
-        assert_eq!(
-            issue.message(),
-            "test/package.json `optionalDependencies` field is empty."
-        );
+        let issue = EmptyDependenciesIssue::new(DependencyKind::OptionalDependencies);
+        insta::assert_snapshot!(issue.message());
     }
 }
