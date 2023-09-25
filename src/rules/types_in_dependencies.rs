@@ -45,7 +45,7 @@ impl Issue for TypesInDependenciesIssue {
   │   ...
   {}   "{}": {{      {}
   {}
-  {}   }}
+  {}   }},
   │   ...
   {}   "{}": {{   {}
   {}
