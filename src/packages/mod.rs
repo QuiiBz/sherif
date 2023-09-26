@@ -80,10 +80,7 @@ impl Package {
     ) -> Option<BoxIssue> {
         if let Some(dependencies) = deps {
             if dependencies.is_empty() {
-                return Some(EmptyDependenciesIssue::new(
-                    self.get_path(),
-                    dependency_kind,
-                ));
+                return Some(EmptyDependenciesIssue::new(dependency_kind));
             }
         }
 

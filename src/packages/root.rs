@@ -29,8 +29,7 @@ impl RootPackage {
     pub fn check_private(&self) -> Option<BoxIssue> {
         match self.0.inner.private {
             Some(true) => None,
-            Some(false) => Some(RootPackagePrivateFieldIssue::new(true)),
-            None => Some(RootPackagePrivateFieldIssue::new(false)),
+            _ => Some(RootPackagePrivateFieldIssue::new()),
         }
     }
 

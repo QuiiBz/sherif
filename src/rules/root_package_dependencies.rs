@@ -22,14 +22,37 @@ impl Issue for RootPackageDependenciesIssue {
 
     fn message(&self) -> String {
         format!(
-            "./package.json shouldn't have any `{}` , only `{}`.",
-            "dependencies".red(),
-            "devDependencies".green()
+            r#"  │ {{
+  │   "{}": "{}",     {}
+  │   ...
+  {}   "{}": {{      {}
+  {}      ...
+  {}   }},
+  │   ...
+  {}   "{}": {{   {}
+  {}      ...
+  {}   }}
+  │ }}"#,
+            "private".white(),
+            "true".white(),
+            "← root package is private...".blue(),
+            "-".red(),
+            "dependencies".white(),
+            "← but has dependencies...".red(),
+            "-".red(),
+            "-".red(),
+            "+".green(),
+            "devDependencies".white(),
+            "← instead of devDependencies.".green(),
+            "+".green(),
+            "+".green(),
         )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Borrowed("The root package.json is private, so making a distinction is useless.")
+        Cow::Borrowed("The root package.json is private and should only have devDependencies. Declare dependencies in each package.")
     }
 }
 
@@ -45,9 +68,10 @@ mod test {
         assert_eq!(issue.level(), IssueLevel::Warning);
 
         colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
         assert_eq!(
-            issue.message(),
-            "./package.json shouldn't have any `dependencies` , only `devDependencies`."
+            issue.why(),
+            "The root package.json is private and should only have devDependencies. Declare dependencies in each package."
         );
     }
 }

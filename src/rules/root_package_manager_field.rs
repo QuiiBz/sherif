@@ -7,7 +7,7 @@ pub struct RootPackageManagerFieldIssue;
 
 impl RootPackageManagerFieldIssue {
     pub fn new() -> Box<Self> {
-        Box::new(Self {})
+        Box::new(Self)
     }
 }
 
@@ -22,9 +22,15 @@ impl Issue for RootPackageManagerFieldIssue {
 
     fn message(&self) -> String {
         format!(
-            "./package.json is missing `{}` field.",
-            "packageManager".blue(),
+            r#"  │ {{
+  {}   "{}": "..."   {}
+  │ }}"#,
+            "+".green(),
+            "packageManager".white(),
+            "← missing packageManager field.".green(),
         )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {
@@ -44,9 +50,10 @@ mod test {
         assert_eq!(issue.level(), IssueLevel::Error);
 
         colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
         assert_eq!(
-            issue.message(),
-            "./package.json is missing `packageManager` field."
+            issue.why(),
+            "The root package.json should specify the package manager and version to use. Useful for tools like corepack."
         );
     }
 }

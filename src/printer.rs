@@ -1,6 +1,6 @@
 use crate::{
     plural::Pluralize,
-    rules::{IssuesList, ERROR, IGNORED, SUCCESS, WARNING},
+    rules::{IssuesList, ERROR, SUCCESS, WARNING},
 };
 use colored::Colorize;
 
@@ -9,45 +9,36 @@ pub fn print_success() {
     println!("{}", format!("{} No issues found", SUCCESS).green());
 }
 
-pub fn print_header(
-    total_issues: usize,
-    total_packages: usize,
-    warnings: usize,
-    errors: usize,
-    ignored: usize,
-) {
-    println!();
-    println!(
-        "{} found {} across {}:",
-        "issue".plural(total_issues),
-        format!(
-            "({} {}, {} {}, {} {})",
-            errors, ERROR, warnings, WARNING, ignored, IGNORED,
-        )
-        .bright_black(),
-        "package".plural(total_packages)
-    );
-}
-
 pub fn print_issues(issues: IssuesList) {
-    for issue in issues {
-        let pad = " ".repeat(issue.level().as_str().len());
-
+    for (package_type, issues) in issues {
         println!();
         println!(
-            " {} {}",
-            issue.level().to_string().bold(),
-            issue.message().bold()
+            "{} found in {}:",
+            "issue".plural(issues.len()),
+            package_type.to_string().bold(),
         );
-        println!(
-            "{}{}",
-            pad,
-            format!("{}: {}", issue.name(), issue.why()).bright_black(),
-        );
+
+        for issue in issues {
+            println!();
+            println!(
+                " {} {} {}",
+                issue.level().to_string().bold(),
+                issue.why().bold(),
+                issue.name().bright_black(),
+            );
+            println!("{}", issue.message());
+        }
     }
 }
 
-pub fn print_footer() {
+pub fn print_footer(total_issues: usize, total_packages: usize, warnings: usize, errors: usize) {
+    println!();
+    println!(
+        "{} found {} across {}.",
+        "issue".plural(total_issues),
+        format!("({} {}, {} {})", errors, ERROR, warnings, WARNING,).bright_black(),
+        "package".plural(total_packages)
+    );
     println!();
     println!(
         "{}",

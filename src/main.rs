@@ -1,5 +1,5 @@
 use crate::args::Args;
-use crate::printer::{print_header, print_success};
+use crate::printer::print_success;
 use crate::rules::IssueLevel;
 use clap::Parser;
 use collect::{collect_issues, collect_packages};
@@ -40,13 +40,11 @@ fn main() {
 
     let warnings = issues.len_by_level(IssueLevel::Warning);
     let errors = issues.len_by_level(IssueLevel::Error);
-    let ignored = issues.len_by_level(IssueLevel::Ignored);
 
-    print_header(total_issues, total_packages, warnings, errors, ignored);
     print_issues(issues);
+    print_footer(total_issues, total_packages, warnings, errors);
 
     if errors > 0 {
-        print_footer();
         std::process::exit(1);
     }
 }
