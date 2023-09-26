@@ -5,6 +5,7 @@ use clap::Parser;
 use collect::{collect_issues, collect_packages};
 use colored::Colorize;
 use printer::{print_footer, print_issues};
+use std::time::Instant;
 
 mod args;
 mod collect;
@@ -14,6 +15,7 @@ mod printer;
 mod rules;
 
 fn main() {
+    let now = Instant::now();
     let args = Args::parse();
     let packages_list = match collect_packages(&args) {
         Ok(result) => result,
@@ -41,8 +43,14 @@ fn main() {
     let warnings = issues.len_by_level(IssueLevel::Warning);
     let errors = issues.len_by_level(IssueLevel::Error);
 
-    print_issues(issues);
-    print_footer(total_issues, total_packages, warnings, errors);
+    if let Err(error) = print_issues(issues) {
+        eprintln!();
+        eprintln!(" {} {}", IssueLevel::Error, "Failed to print issues".bold());
+        eprintln!("   {}", error.to_string().bright_black());
+        std::process::exit(1);
+    }
+
+    print_footer(total_issues, total_packages, warnings, errors, now);
 
     if errors > 0 {
         std::process::exit(1);

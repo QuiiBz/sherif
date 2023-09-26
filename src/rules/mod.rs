@@ -67,12 +67,12 @@ impl Display for PackageType {
 }
 
 pub struct IssuesList<'a> {
-    ignored_issues: &'a Vec<String>,
+    ignored_issues: &'a [String],
     issues: IndexMap<PackageType, Vec<BoxIssue>>,
 }
 
 impl<'a> IssuesList<'a> {
-    pub fn new(ignored_issues: &'a Vec<String>) -> Self {
+    pub fn new(ignored_issues: &'a [String]) -> Self {
         Self {
             ignored_issues,
             issues: IndexMap::new(),
