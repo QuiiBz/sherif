@@ -35,9 +35,9 @@ impl Issue for MultipleDependencyVersionsIssue {
                 let end = common_path.pop().unwrap();
 
                 let (version, indicator) = if version == self.versions.last().unwrap().1 {
-                    (version.to_string().green(), "⬆️ highest".green())
+                    (version.to_string().green(), "↑ highest".green())
                 } else if version == self.versions.first().unwrap().1 {
-                    (version.to_string().red(), "⬇️ lowest".red())
+                    (version.to_string().red(), "↓ lowest".red())
                 } else {
                     (version.to_string().yellow(), "∼ between".yellow())
                 };
