@@ -26,14 +26,14 @@ impl Issue for TypesInDependenciesIssue {
         let before = self
             .packages
             .iter()
-            .map(|package| format!(r#"{}      "{}": "...""#, "-".red(), package.white()))
+            .map(|package| format!(r#"  {}      "{}": "...","#, "-".red(), package.white()))
             .collect::<Vec<String>>()
             .join("\n");
 
         let after = self
             .packages
             .iter()
-            .map(|package| format!(r#"{}      "{}": "...""#, "+".green(), package.white()))
+            .map(|package| format!(r#"  {}      "{}": "...","#, "+".green(), package.white()))
             .collect::<Vec<String>>()
             .join("\n");
 
@@ -42,11 +42,11 @@ impl Issue for TypesInDependenciesIssue {
   │   "{}": "{}",     {}
   │   ...
   {}   "{}": {{      {}
-  {}
+{}
   {}   }},
   │   ...
   {}   "{}": {{   {}
-  {}
+{}
   {}   }}
   │ }}"#,
             "private".white(),

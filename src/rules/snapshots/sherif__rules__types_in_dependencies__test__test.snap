@@ -6,12 +6,12 @@ expression: issue.message()
   │   "private": "true",     ← package is private...
   │   ...
   -   "dependencies": {      ← but has @types/* in dependencies...
-  -      "@types/react": "..."
--      "@types/react-dom": "..."
+  -      "@types/react": "...",
+  -      "@types/react-dom": "...",
   -   },
   │   ...
   +   "devDependencies": {   ← instead of devDependencies.
-  +      "@types/react": "..."
-+      "@types/react-dom": "..."
+  +      "@types/react": "...",
+  +      "@types/react-dom": "...",
   +   }
   │ }
