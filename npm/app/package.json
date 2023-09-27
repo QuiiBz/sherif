@@ -1,6 +1,6 @@
 {
   "name": "sherif",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Opinionated, zero-config linter for JavaScript monorepos",
   "bin": {
     "sherif": "./index.js"
@@ -21,11 +21,11 @@
   "homepage": "https://github.com/QuiiBz/sherif#readme",
   "license": "MIT",
   "optionalDependencies": {
-    "sherif-linux-x64": "0.2.0",
-    "sherif-linux-arm64": "0.2.0",
-    "sherif-darwin-x64": "0.2.0",
-    "sherif-darwin-arm64": "0.2.0",
-    "sherif-windows-x64": "0.2.0",
-    "sherif-windows-arm64": "0.2.0"
+    "sherif-linux-x64": "0.3.0",
+    "sherif-linux-arm64": "0.3.0",
+    "sherif-darwin-x64": "0.3.0",
+    "sherif-darwin-arm64": "0.3.0",
+    "sherif-windows-x64": "0.3.0",
+    "sherif-windows-arm64": "0.3.0"
   }
 }
