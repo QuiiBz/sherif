@@ -1,8 +1,16 @@
 use super::{Issue, IssueLevel};
 use colored::Colorize;
 use indexmap::IndexMap;
-use semver::VersionReq;
-use std::borrow::Cow;
+use semver::{Comparator, Op, Prerelease, VersionReq};
+use std::{borrow::Cow, cmp::Ordering};
+
+const DEFAULT_COMPARATOR: Comparator = Comparator {
+    op: Op::Exact,
+    major: 0,
+    minor: None,
+    patch: None,
+    pre: Prerelease::EMPTY,
+};
 
 #[derive(Debug)]
 pub struct MultipleDependencyVersionsIssue {
@@ -11,7 +19,31 @@ pub struct MultipleDependencyVersionsIssue {
 }
 
 impl MultipleDependencyVersionsIssue {
-    pub fn new(name: String, versions: IndexMap<String, VersionReq>) -> Box<Self> {
+    pub fn new(name: String, mut versions: IndexMap<String, VersionReq>) -> Box<Self> {
+        versions.sort_by(|_, a, _, b| {
+            let a_comparator = a.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
+            let b_comparator = b.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
+
+            let mut ordering = Ordering::Equal;
+
+            ordering = match a_comparator.patch.cmp(&b_comparator.patch) {
+                Ordering::Equal => ordering,
+                ordering => ordering,
+            };
+
+            ordering = match a_comparator.minor.cmp(&b_comparator.minor) {
+                Ordering::Equal => ordering,
+                ordering => ordering,
+            };
+
+            ordering = match a_comparator.major.cmp(&b_comparator.major) {
+                Ordering::Equal => ordering,
+                ordering => ordering,
+            };
+
+            ordering
+        });
+
         Box::new(Self { name, versions })
     }
 }
