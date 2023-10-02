@@ -32,7 +32,7 @@ fn main() {
     };
 
     let total_packages = packages_list.packages.len();
-    let issues = collect_issues(&args, packages_list);
+    let mut issues = collect_issues(&args, packages_list);
 
     if args.fix {
         if let Err(error) = issues.fix() {
@@ -52,6 +52,7 @@ fn main() {
 
     let warnings = issues.len_by_level(IssueLevel::Warning);
     let errors = issues.len_by_level(IssueLevel::Error);
+    let fixed = issues.len_by_level(IssueLevel::Fixed);
 
     if let Err(error) = print_issues(issues) {
         eprintln!();
@@ -60,7 +61,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    print_footer(total_issues, total_packages, warnings, errors, now);
+    print_footer(total_issues, total_packages, warnings, errors, fixed, now);
 
     if errors > 0 {
         std::process::exit(1);

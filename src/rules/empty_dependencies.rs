@@ -25,11 +25,15 @@ impl Display for DependencyKind {
 #[derive(Debug)]
 pub struct EmptyDependenciesIssue {
     dependency_kind: DependencyKind,
+    fixed: bool,
 }
 
 impl EmptyDependenciesIssue {
     pub fn new(dependency_kind: DependencyKind) -> Box<Self> {
-        Box::new(Self { dependency_kind })
+        Box::new(Self {
+            dependency_kind,
+            fixed: false,
+        })
     }
 }
 
@@ -39,7 +43,10 @@ impl Issue for EmptyDependenciesIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Error
+        match self.fixed {
+            true => IssueLevel::Fixed,
+            false => IssueLevel::Error,
+        }
     }
 
     fn message(&self) -> String {
@@ -60,7 +67,7 @@ impl Issue for EmptyDependenciesIssue {
         Cow::Borrowed("package.json should not have empty dependencies fields.")
     }
 
-    fn fix(&self, package_type: &PackageType) -> Result<bool> {
+    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
         if let PackageType::Package(path) = package_type {
             let path = PathBuf::from(path).join("package.json");
             let value = fs::read_to_string(&path)?;
@@ -75,12 +82,12 @@ impl Issue for EmptyDependenciesIssue {
                     let value = serde_json::to_string_pretty(&value)?;
                     fs::write(path, value)?;
 
-                    return Ok(true);
+                    self.fixed = true;
                 }
             }
         }
 
-        Ok(false)
+        Ok(())
     }
 }
 

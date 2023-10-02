@@ -48,13 +48,18 @@ pub fn print_footer(
     total_packages: usize,
     warnings: usize,
     errors: usize,
+    fixed: usize,
     start: Instant,
 ) {
     println!();
     println!(
         "{} found {} across {} in {:?}.",
         "issue".plural(total_issues),
-        format!("({} {}, {} {})", errors, ERROR, warnings, WARNING,).bright_black(),
+        format!(
+            "({} {}, {} {}, {} {})",
+            errors, ERROR, warnings, WARNING, fixed, SUCCESS
+        )
+        .bright_black(),
         "package".plural(total_packages),
         start.elapsed(),
     );
