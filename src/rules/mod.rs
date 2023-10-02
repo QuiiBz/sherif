@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use colored::Colorize;
 use indexmap::IndexMap;
 use std::{borrow::Cow, fmt::Display};
@@ -46,8 +47,8 @@ pub trait Issue {
     fn message(&self) -> String;
     fn why(&self) -> Cow<'static, str>;
 
-    fn fix(&self) -> bool {
-        false
+    fn fix(&self, _package_type: &PackageType) -> Result<bool> {
+        Ok(false)
     }
 }
 
@@ -109,12 +110,16 @@ impl<'a> IssuesList<'a> {
             .count()
     }
 
-    pub fn fix(&self) {
-        for issues in self.issues.values() {
+    pub fn fix(&self) -> Result<()> {
+        for (package_type, issues) in &self.issues {
             for issue in issues {
-                issue.fix();
+                if let Err(error) = issue.fix(package_type) {
+                    return Err(anyhow!("Error while fixing {}: {}", package_type, error));
+                }
             }
         }
+
+        Ok(())
     }
 }
 

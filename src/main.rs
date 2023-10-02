@@ -35,7 +35,12 @@ fn main() {
     let issues = collect_issues(&args, packages_list);
 
     if args.fix {
-        issues.fix();
+        if let Err(error) = issues.fix() {
+            eprintln!();
+            eprintln!(" {} {}", IssueLevel::Error, "Failed to fix issues".bold());
+            eprintln!("   {}", error.to_string().bright_black());
+            std::process::exit(1);
+        }
     }
 
     let total_issues = issues.total_len();
