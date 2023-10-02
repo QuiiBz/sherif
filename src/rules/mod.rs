@@ -45,6 +45,10 @@ pub trait Issue {
     fn level(&self) -> IssueLevel;
     fn message(&self) -> String;
     fn why(&self) -> Cow<'static, str>;
+
+    fn fix(&self) -> bool {
+        false
+    }
 }
 
 pub type BoxIssue = Box<dyn Issue>;
@@ -103,6 +107,14 @@ impl<'a> IssuesList<'a> {
             .flatten()
             .filter(|issue| issue.level() == level)
             .count()
+    }
+
+    pub fn fix(&self) {
+        for issues in self.issues.values() {
+            for issue in issues {
+                issue.fix();
+            }
+        }
     }
 }
 

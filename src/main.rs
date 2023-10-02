@@ -33,6 +33,11 @@ fn main() {
 
     let total_packages = packages_list.packages.len();
     let issues = collect_issues(&args, packages_list);
+
+    if args.fix {
+        issues.fix();
+    }
+
     let total_issues = issues.total_len();
 
     if total_issues == 0 {

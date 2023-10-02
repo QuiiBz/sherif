@@ -7,6 +7,10 @@ pub struct Args {
     #[arg(default_value = ".")]
     pub path: PathBuf,
 
+    /// Fix the issues automatically, if possible.
+    #[arg(long)]
+    pub fix: bool,
+
     /// Ignore the `multiple-dependency-versions` rule for the given dependency name.
     #[arg(long, short)]
     pub ignore_dependency: Vec<String>,

@@ -58,6 +58,11 @@ impl Issue for EmptyDependenciesIssue {
     fn why(&self) -> Cow<'static, str> {
         Cow::Borrowed("package.json should not have empty dependencies fields.")
     }
+
+    fn fix(&self) -> bool {
+        // TODO: read & remove self.dependency_kind from root package.json
+        false
+    }
 }
 
 #[cfg(test)]
