@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use colored::Colorize;
 use indexmap::IndexMap;
 use std::{borrow::Cow, fmt::Display};
@@ -18,6 +19,7 @@ pub const SUCCESS: &str = "✓";
 pub enum IssueLevel {
     Error,
     Warning,
+    Fixed,
 }
 
 impl IssueLevel {
@@ -25,6 +27,7 @@ impl IssueLevel {
         match self {
             IssueLevel::Error => "⨯ error",
             IssueLevel::Warning => "⚠️ warning",
+            IssueLevel::Fixed => "✓ fixed",
         }
     }
 }
@@ -36,6 +39,7 @@ impl Display for IssueLevel {
         match self {
             IssueLevel::Error => write!(f, "{}", value.red()),
             IssueLevel::Warning => write!(f, "{}", value.yellow()),
+            IssueLevel::Fixed => write!(f, "{}", value.green()),
         }
     }
 }
@@ -45,6 +49,10 @@ pub trait Issue {
     fn level(&self) -> IssueLevel;
     fn message(&self) -> String;
     fn why(&self) -> Cow<'static, str>;
+
+    fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
+        Ok(())
+    }
 }
 
 pub type BoxIssue = Box<dyn Issue>;
@@ -103,6 +111,18 @@ impl<'a> IssuesList<'a> {
             .flatten()
             .filter(|issue| issue.level() == level)
             .count()
+    }
+
+    pub fn fix(&mut self) -> Result<()> {
+        for (package_type, issues) in self.issues.iter_mut() {
+            for issue in issues {
+                if let Err(error) = issue.fix(package_type) {
+                    return Err(anyhow!("Error while fixing {}: {}", package_type, error));
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

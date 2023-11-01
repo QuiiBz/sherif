@@ -1,6 +1,7 @@
-use super::{Issue, IssueLevel};
+use super::{Issue, IssueLevel, PackageType};
+use anyhow::Result;
 use colored::Colorize;
-use std::{borrow::Cow, fmt::Display};
+use std::{borrow::Cow, fmt::Display, fs, path::PathBuf};
 
 #[derive(Debug)]
 pub enum DependencyKind {
@@ -24,11 +25,15 @@ impl Display for DependencyKind {
 #[derive(Debug)]
 pub struct EmptyDependenciesIssue {
     dependency_kind: DependencyKind,
+    fixed: bool,
 }
 
 impl EmptyDependenciesIssue {
     pub fn new(dependency_kind: DependencyKind) -> Box<Self> {
-        Box::new(Self { dependency_kind })
+        Box::new(Self {
+            dependency_kind,
+            fixed: false,
+        })
     }
 }
 
@@ -38,7 +43,10 @@ impl Issue for EmptyDependenciesIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Error
+        match self.fixed {
+            true => IssueLevel::Fixed,
+            false => IssueLevel::Error,
+        }
     }
 
     fn message(&self) -> String {
@@ -57,6 +65,29 @@ impl Issue for EmptyDependenciesIssue {
 
     fn why(&self) -> Cow<'static, str> {
         Cow::Borrowed("package.json should not have empty dependencies fields.")
+    }
+
+    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
+        if let PackageType::Package(path) = package_type {
+            let path = PathBuf::from(path).join("package.json");
+            let value = fs::read_to_string(&path)?;
+            let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+            let dependency = self.dependency_kind.to_string();
+
+            if let Some(dependency_field) = value.get(&dependency) {
+                if dependency_field.is_object() && dependency_field.as_object().unwrap().is_empty()
+                {
+                    value.as_object_mut().unwrap().remove(&dependency);
+
+                    let value = serde_json::to_string_pretty(&value)?;
+                    fs::write(path, value)?;
+
+                    self.fixed = true;
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
