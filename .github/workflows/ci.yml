@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@stable
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - name: Checkout
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - name: Checkout
