@@ -1,15 +1,21 @@
-use super::{Issue, IssueLevel};
+use super::{Issue, IssueLevel, PackageType};
+use anyhow::Result;
 use colored::Colorize;
-use std::borrow::Cow;
+use indexmap::IndexMap;
+use std::{borrow::Cow, fs, path::PathBuf};
 
 #[derive(Debug)]
 pub struct TypesInDependenciesIssue {
     packages: Vec<String>,
+    fixed: bool,
 }
 
 impl TypesInDependenciesIssue {
     pub fn new(packages: Vec<String>) -> Box<Self> {
-        Box::new(Self { packages })
+        Box::new(Self {
+            packages,
+            fixed: false,
+        })
     }
 }
 
@@ -19,7 +25,10 @@ impl Issue for TypesInDependenciesIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Error
+        match self.fixed {
+            true => IssueLevel::Fixed,
+            false => IssueLevel::Error,
+        }
     }
 
     fn message(&self) -> String {
@@ -69,6 +78,44 @@ impl Issue for TypesInDependenciesIssue {
 
     fn why(&self) -> Cow<'static, str> {
         Cow::Borrowed("Private packages shouldn't have @types/* in dependencies.")
+    }
+
+    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
+        if let PackageType::Package(path) = package_type {
+            let path = PathBuf::from(path).join("package.json");
+            let value = fs::read_to_string(&path)?;
+            let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+
+            let dependencies = value
+                .get_mut("dependencies")
+                .unwrap()
+                .as_object_mut()
+                .unwrap();
+            let mut dependencies_to_add = IndexMap::new();
+
+            for package in &self.packages {
+                if let Some(version) = dependencies.remove(package) {
+                    dependencies_to_add.insert(package.clone(), version);
+                }
+            }
+
+            let dev_dependencies = value
+                .get_mut("devDependencies")
+                .unwrap()
+                .as_object_mut()
+                .unwrap();
+
+            for (package, version) in dependencies_to_add {
+                dev_dependencies.insert(package, version);
+            }
+
+            let value = serde_json::to_string_pretty(&value)?;
+            fs::write(path, value)?;
+
+            self.fixed = true;
+        }
+
+        Ok(())
     }
 }
 
