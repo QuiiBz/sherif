@@ -44,7 +44,6 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
         Ok(package) => packages.push(package),
         Err(error) => {
             if error.to_string().contains("package.json") {
-                println!("push");
                 packages_issues.push(PackagesWithoutPackageJsonIssue::new(
                     path.to_string_lossy().to_string(),
                 ));
