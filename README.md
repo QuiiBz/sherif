@@ -51,7 +51,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: npx sherif@0.4.0
+      - run: npx sherif@0.4.1
 ```
 
 </details>
