@@ -65,7 +65,7 @@ pub fn print_footer(
     );
     println!(
         "{}",
-        " Note: use `-i` to ignore dependencies, `-r` to ignore rules, and `-p` to ignore packages."
+        " Note: use `-i` to ignore dependencies, `-r` to ignore rules, `-p` to ignore packages, and `--fix` to autofix fixable issues."
             .bright_black()
     );
 }
