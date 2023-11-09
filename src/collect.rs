@@ -121,7 +121,9 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         issues.add(package_type.clone(), package.check_peer_dependencies());
         issues.add(package_type.clone(), package.check_optional_dependencies());
 
-        if let Some(mut dependencies) = package.get_dependencies() {
+        let mut joined_dependencies = IndexMap::new();
+
+        if let Some(dependencies) = package.get_dependencies() {
             if package.is_private() {
                 let types_in_dependencies = dependencies
                     .iter()
@@ -137,17 +139,19 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                 }
             }
 
-            if let Some(dev_dependencies) = package.get_dev_dependencies() {
-                dependencies.extend(dev_dependencies);
-            }
+            joined_dependencies.extend(dependencies);
+        }
 
-            for (name, version) in dependencies {
-                if !version.comparators.is_empty() {
-                    all_dependencies
-                        .entry(name)
-                        .or_insert_with(IndexMap::new)
-                        .insert(package.get_path(), version);
-                }
+        if let Some(dev_dependencies) = package.get_dev_dependencies() {
+            joined_dependencies.extend(dev_dependencies);
+        }
+
+        for (name, version) in joined_dependencies {
+            if !version.comparators.is_empty() {
+                all_dependencies
+                    .entry(name)
+                    .or_insert_with(IndexMap::new)
+                    .insert(package.get_path(), version);
             }
         }
     }
