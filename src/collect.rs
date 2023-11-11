@@ -127,7 +127,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
             }
         }
 
-        if non_existant_paths.len() > 0 {
+        if !non_existant_paths.is_empty() {
             packages_issues.push(NonExistantPackagesIssue::new(
                 is_pnpm_workspace,
                 packages_list.unwrap(),
