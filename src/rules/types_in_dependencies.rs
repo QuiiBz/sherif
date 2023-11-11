@@ -99,11 +99,20 @@ impl Issue for TypesInDependenciesIssue {
                 }
             }
 
-            let dev_dependencies = value
-                .get_mut("devDependencies")
-                .unwrap()
-                .as_object_mut()
-                .unwrap();
+            // The package.json file might not have a devDependencies field.
+            let dev_dependencies = match value.get_mut("devDependencies") {
+                Some(dev_dependencies) => dev_dependencies,
+                None => {
+                    value.as_object_mut().unwrap().insert(
+                        "devDependencies".into(),
+                        serde_json::Value::Object(serde_json::Map::new()),
+                    );
+
+                    value.get_mut("devDependencies").unwrap()
+                }
+            };
+
+            let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
 
             for (package, version) in dependencies_to_add {
                 dev_dependencies.insert(package, version);
