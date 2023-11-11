@@ -91,7 +91,7 @@ impl Issue for NonExistantPackagesIssue {
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Borrowed("All paths in the workspace should have at least one package.")
+        Cow::Borrowed("All paths defined in the workspace should match at least one package.")
     }
 }
 
@@ -116,7 +116,7 @@ mod test {
         assert_eq!(issue.level(), IssueLevel::Warning);
         assert_eq!(
             issue.why(),
-            "All paths in the workspace should have at least one package."
+            "All paths defined in the workspace should match at least one package."
         );
     }
 

@@ -90,9 +90,13 @@ You can ignore this rule for a dependency if you expect to have multiple version
 sherif -i react -i @types/node
 ```
 
+#### `non-existant-packages` ⚠️
+
+All paths defined in the workspace (the root `package.json`' `workspaces` field or `pnpm-workspace.yaml`) should match at least one package.
+
 #### `packages-without-package-json` ⚠️
 
-All packages defined in the root `package.json`' `workspaces` field or `pnpm-workspace.yaml` should have a `package.json` file.
+All packages matching the workspace (the root `package.json`' `workspaces` field or `pnpm-workspace.yaml`) should have a `package.json` file.
 
 #### `root-package-dependencies` ⚠️
 
