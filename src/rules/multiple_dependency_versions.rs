@@ -74,11 +74,17 @@ impl Issue for MultipleDependencyVersionsIssue {
                     (version.to_string().yellow(), "∼ between".yellow())
                 };
 
-                let version_pad = " ".repeat(if end.len() > 26 { 3 } else { 26 - end.len() });
+                let version_pad = " ".repeat(if end.len() >= 26 { 3 } else { 26 - end.len() });
 
                 if group.is_empty() || group != common_path {
                     let root = common_path.join("/").bright_black();
                     group = common_path;
+
+                    if group.len() == 1 && group[0] == "." {
+                        let root = format!("{}{}", "./".bright_black(), end.bright_black());
+
+                        return format!("  {}  {}{}   {}", root, version_pad, version, indicator);
+                    }
 
                     return format!(
                         "  {}
@@ -122,9 +128,9 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "packages/package-a".into() => VersionReq::parse("1.2.3").unwrap(),
-                "packages/package-b".into() => VersionReq::parse("1.2.4").unwrap(),
-                "package-c".into() => VersionReq::parse("1.2.5").unwrap(),
+                "./packages/package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+                "./packages/package-b".into() => VersionReq::parse("1.2.4").unwrap(),
+                "./package-c".into() => VersionReq::parse("1.2.5").unwrap(),
             },
         );
 
@@ -142,7 +148,7 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+                "./package-a".into() => VersionReq::parse("1.2.3").unwrap(),
             },
         );
 
@@ -155,9 +161,9 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "apps/package-a".into() => VersionReq::parse("5.6.3").unwrap(),
-                "apps/package-b".into() => VersionReq::parse("1.2.3").unwrap(),
-                "packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
+                "./apps/package-a".into() => VersionReq::parse("5.6.3").unwrap(),
+                "./apps/package-b".into() => VersionReq::parse("1.2.3").unwrap(),
+                "./packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
             },
         );
 
@@ -170,9 +176,9 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "package-a".into() => VersionReq::parse("1.2.3").unwrap(),
-                "packages/package-b".into() => VersionReq::parse("3.1.6").unwrap(),
-                "packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
+                "./package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+                "./packages/package-b".into() => VersionReq::parse("3.1.6").unwrap(),
+                "./packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
             },
         );
 
