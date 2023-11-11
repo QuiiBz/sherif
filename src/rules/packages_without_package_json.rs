@@ -26,7 +26,7 @@ impl Issue for PackagesWithoutPackageJsonIssue {
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Borrowed("All packages in the workspace should have a package.json file.")
+        Cow::Borrowed("All packages matching the workspace should have a package.json file.")
     }
 }
 
@@ -45,7 +45,7 @@ mod test {
         assert_eq!(issue.message(), "   test/package.json doesn't exists.");
         assert_eq!(
             issue.why(),
-            "All packages in the workspace should have a package.json file."
+            "All packages matching the workspace should have a package.json file."
         );
     }
 }

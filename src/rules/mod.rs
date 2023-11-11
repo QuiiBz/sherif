@@ -5,6 +5,7 @@ use std::{borrow::Cow, fmt::Display};
 
 pub mod empty_dependencies;
 pub mod multiple_dependency_versions;
+pub mod non_existant_packages;
 pub mod packages_without_package_json;
 pub mod root_package_dependencies;
 pub mod root_package_manager_field;

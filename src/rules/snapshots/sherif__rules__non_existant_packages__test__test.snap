@@ -1,0 +1,9 @@
+---
+source: src/rules/non_existant_packages.rs
+expression: issue.message()
+---
+  │ packages:   ← Workspace has paths defined...
+  │  - 'apps/*'
+  │  - 'packages/*'
+  -  - 'empty/*'   ← but this one doesn't match any package
+  -  - 'docs'   ← but this one doesn't match any package
