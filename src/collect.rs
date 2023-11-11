@@ -2,6 +2,7 @@ use crate::args::Args;
 use crate::packages::root::RootPackage;
 use crate::packages::{Package, PackagesList};
 use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
+use crate::rules::non_existant_packages::NonExistantPackagesIssue;
 use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
 use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
 use crate::rules::{BoxIssue, IssuesList, PackageType};
@@ -22,6 +23,8 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
     let mut packages = Vec::new();
     let mut packages_list = root_package.get_workspaces();
     let mut excluded_paths = Vec::new();
+    let mut non_existant_paths = Vec::new();
+    let mut is_pnpm_workspace = false;
 
     if packages_list.is_none() {
         let pnpm_workspace = args.path.join(PNPM_WORKSPACE);
@@ -37,22 +40,24 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
         let workspace: PnpmWorkspace = serde_yaml::from_str(&root_package)?;
 
         packages_list = Some(workspace.packages);
+        is_pnpm_workspace = true;
     }
 
     let mut packages_issues: Vec<BoxIssue> = Vec::new();
 
-    let mut add_package = |path: PathBuf| match Package::new(path.clone()) {
-        Ok(package) => packages.push(package),
-        Err(error) => {
-            if error.to_string().contains("package.json") {
-                packages_issues.push(PackagesWithoutPackageJsonIssue::new(
-                    path.to_string_lossy().to_string(),
-                ));
+    let mut add_package =
+        |packages_issues: &mut Vec<BoxIssue>, path: PathBuf| match Package::new(path.clone()) {
+            Ok(package) => packages.push(package),
+            Err(error) => {
+                if error.to_string().contains("package.json") {
+                    packages_issues.push(PackagesWithoutPackageJsonIssue::new(
+                        path.to_string_lossy().to_string(),
+                    ));
+                }
             }
-        }
-    };
+        };
 
-    if let Some(packages) = packages_list {
+    if let Some(packages) = &packages_list {
         let packages = packages
             .iter()
             .filter(|package| {
@@ -86,8 +91,9 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
 
                 let packages = match directory.read_dir() {
                     Ok(packages) => packages,
-                    Err(error) => {
-                        return Err(anyhow!("Error while reading {:?}: {}", directory, error))
+                    Err(_) => {
+                        non_existant_paths.push(package.to_string());
+                        continue;
                     }
                 };
 
@@ -107,13 +113,26 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                         }
 
                         if !is_excluded {
-                            add_package(path);
+                            add_package(&mut packages_issues, path);
                         }
                     }
                 }
             } else {
-                add_package(args.path.join(package));
+                let path = args.path.join(package);
+
+                match path.is_dir() {
+                    true => add_package(&mut packages_issues, path),
+                    false => non_existant_paths.push(package.to_string()),
+                }
             }
+        }
+
+        if non_existant_paths.len() > 0 {
+            packages_issues.push(NonExistantPackagesIssue::new(
+                is_pnpm_workspace,
+                packages_list.unwrap(),
+                non_existant_paths,
+            ));
         }
     }
 
