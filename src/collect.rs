@@ -21,6 +21,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
     let root_package = RootPackage::new(&args.path)?;
     let mut packages = Vec::new();
     let mut packages_list = root_package.get_workspaces();
+    let mut excluded_paths = Vec::new();
 
     if packages_list.is_none() {
         let pnpm_workspace = args.path.join(PNPM_WORKSPACE);
@@ -52,7 +53,33 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
     };
 
     if let Some(packages) = packages_list {
-        for package in packages {
+        let packages = packages
+            .iter()
+            .filter(|package| {
+                if package.starts_with('!') {
+                    if package.ends_with('*') {
+                        let directory = package
+                            .trim_start_matches('!')
+                            .trim_end_matches('*')
+                            .trim_end_matches('/');
+                        let directory = args.path.join(directory);
+
+                        excluded_paths.push(directory.to_string_lossy().to_string());
+                    } else {
+                        let directory = package.trim_start_matches('!');
+                        let directory = args.path.join(directory);
+
+                        excluded_paths.push(directory.to_string_lossy().to_string());
+                    }
+
+                    return false;
+                }
+
+                true
+            })
+            .collect::<Vec<_>>();
+
+        for package in &packages {
             if package.ends_with('*') {
                 let directory = package.trim_end_matches('*').trim_end_matches('/');
                 let directory = args.path.join(directory);
@@ -68,7 +95,20 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                     let package = package?;
 
                     if package.file_type()?.is_dir() {
-                        add_package(package.path());
+                        let path = package.path();
+                        let real_path = path.to_string_lossy().to_string();
+                        let mut is_excluded = false;
+
+                        for excluded_path in &excluded_paths {
+                            if real_path.starts_with(excluded_path) {
+                                is_excluded = true;
+                                break;
+                            }
+                        }
+
+                        if !is_excluded {
+                            add_package(path);
+                        }
                     }
                 }
             } else {
@@ -314,6 +354,38 @@ mod test {
         assert_eq!(packages_issues.len(), 2);
         assert_eq!(packages_issues[0].name(), "packages-without-package-json");
         assert_eq!(packages_issues[1].name(), "packages-without-package-json");
+    }
+
+    #[test]
+    fn collect_packages_ignore_paths() {
+        let args = Args {
+            path: "fixtures/ignore-paths".into(),
+            fix: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let result = collect_packages(&args);
+
+        assert!(result.is_ok());
+        let PackagesList {
+            root_package,
+            packages,
+            ..
+        } = result.unwrap();
+
+        assert_eq!(root_package.get_name(), "ignore-paths");
+        assert_eq!(packages.len(), 2);
+
+        let mut packages = packages
+            .into_iter()
+            .map(|package| package.get_name().to_string())
+            .collect::<Vec<_>>();
+        packages.sort();
+
+        assert_eq!(packages[0], "docs");
+        assert_eq!(packages[1], "ghi");
     }
 
     #[test]
