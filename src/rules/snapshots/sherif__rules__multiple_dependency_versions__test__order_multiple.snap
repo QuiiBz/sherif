@@ -3,8 +3,8 @@ source: src/rules/multiple_dependency_versions.rs
 expression: issue.message()
 ---
   apps
-      package-b       ^1.2.3   ↓ lowest
+      package-b                 ^1.2.3   ↓ lowest
   packages
-      package-c       ^3.1.6   ∼ between
+      package-c                 ^3.1.6   ∼ between
   apps
-      package-a       ^5.6.3   ↑ highest
+      package-a                 ^5.6.3   ↑ highest
