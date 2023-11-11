@@ -303,7 +303,8 @@ mod test {
 
         assert_eq!(root_package.get_name(), "basic");
         assert_eq!(packages.len(), 3);
-        assert_eq!(packages_issues.len(), 0);
+        assert_eq!(packages_issues.len(), 1);
+        assert!(packages_issues[0].name() == "non-existant-packages");
     }
 
     #[test]
@@ -327,7 +328,8 @@ mod test {
 
         assert_eq!(root_package.get_name(), "pnpm");
         assert_eq!(packages.len(), 3);
-        assert_eq!(packages_issues.len(), 0);
+        assert_eq!(packages_issues.len(), 1);
+        assert!(packages_issues[0].name() == "non-existant-packages");
     }
 
     #[test]
