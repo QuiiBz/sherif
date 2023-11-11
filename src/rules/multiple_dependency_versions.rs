@@ -74,7 +74,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                     (version.to_string().yellow(), "∼ between".yellow())
                 };
 
-                let version_pad = " ".repeat(if end.len() > 16 { 3 } else { 16 - end.len() });
+                let version_pad = " ".repeat(if end.len() > 26 { 3 } else { 26 - end.len() });
 
                 if group.is_empty() || group != common_path {
                     let root = common_path.join("/").bright_black();
