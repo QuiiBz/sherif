@@ -18,8 +18,8 @@ impl RootPackage {
     }
 
     #[cfg(test)]
-    pub fn get_name(&self) -> &String {
-        self.0.get_name()
+    pub fn get_name(&self) -> String {
+        self.0.get_name().clone().unwrap_or_default()
     }
 
     pub fn get_workspaces(&self) -> Option<Vec<String>> {

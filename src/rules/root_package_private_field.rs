@@ -50,10 +50,10 @@ impl Issue for RootPackagePrivateFieldIssue {
             let value = fs::read_to_string(&path)?;
             let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
 
-            value.as_object_mut().unwrap().insert(
-                "private".to_string(),
-                serde_json::Value::String("true".to_string()),
-            );
+            value
+                .as_object_mut()
+                .unwrap()
+                .insert("private".to_string(), serde_json::Value::Bool(true));
 
             let value = serde_json::to_string_pretty(&value)?;
             fs::write(path, value)?;

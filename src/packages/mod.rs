@@ -19,7 +19,7 @@ pub struct PackagesList {
 
 #[derive(Deserialize, Debug)]
 struct PackageInner {
-    name: String,
+    name: Option<String>,
     private: Option<bool>,
     workspaces: Option<Vec<String>>,
     dependencies: Option<IndexMap<String, String>>,
@@ -61,7 +61,7 @@ impl Package {
         })
     }
 
-    pub fn get_name(&self) -> &String {
+    pub fn get_name(&self) -> &Option<String> {
         &self.inner.name
     }
 

@@ -1,14 +1,19 @@
-use super::{Issue, IssueLevel};
-use std::borrow::Cow;
+use super::{Issue, IssueLevel, PackageType};
+use anyhow::Result;
+use std::{borrow::Cow, fs, path::PathBuf};
 
 #[derive(Debug)]
 pub struct PackagesWithoutPackageJsonIssue {
     package: String,
+    fixed: bool,
 }
 
 impl PackagesWithoutPackageJsonIssue {
     pub fn new(package: String) -> Box<Self> {
-        Box::new(Self { package })
+        Box::new(Self {
+            package,
+            fixed: false,
+        })
     }
 }
 
@@ -18,7 +23,10 @@ impl Issue for PackagesWithoutPackageJsonIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Warning
+        match self.fixed {
+            true => IssueLevel::Fixed,
+            false => IssueLevel::Warning,
+        }
     }
 
     fn message(&self) -> String {
@@ -27,6 +35,30 @@ impl Issue for PackagesWithoutPackageJsonIssue {
 
     fn why(&self) -> Cow<'static, str> {
         Cow::Borrowed("All packages matching the workspace should have a package.json file.")
+    }
+
+    fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
+        let path = PathBuf::from(&self.package).join("package.json");
+        let package_name = path
+            .parent()
+            .unwrap()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap();
+
+        let value = serde_json::json!({
+            "name": package_name,
+            "version": "0.0.0",
+            "private": true,
+        });
+
+        let value = serde_json::to_string_pretty(&value)?;
+        fs::write(path, value)?;
+
+        self.fixed = true;
+
+        Ok(())
     }
 }
 
