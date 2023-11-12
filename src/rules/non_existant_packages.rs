@@ -1,12 +1,14 @@
-use super::{Issue, IssueLevel};
+use super::{Issue, IssueLevel, PackageType};
+use anyhow::Result;
 use colored::Colorize;
-use std::borrow::Cow;
+use std::{borrow::Cow, fs, path::PathBuf};
 
 #[derive(Debug)]
 pub struct NonExistantPackagesIssue {
     pnpm_workspace: bool,
     packages_list: Vec<String>,
     paths: Vec<String>,
+    fixed: bool,
 }
 
 impl NonExistantPackagesIssue {
@@ -15,6 +17,7 @@ impl NonExistantPackagesIssue {
             pnpm_workspace,
             packages_list,
             paths,
+            fixed: false,
         })
     }
 
@@ -80,7 +83,10 @@ impl Issue for NonExistantPackagesIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Warning
+        match self.fixed {
+            true => IssueLevel::Fixed,
+            false => IssueLevel::Warning,
+        }
     }
 
     fn message(&self) -> String {
@@ -92,6 +98,57 @@ impl Issue for NonExistantPackagesIssue {
 
     fn why(&self) -> Cow<'static, str> {
         Cow::Borrowed("All paths defined in the workspace should match at least one package.")
+    }
+
+    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
+        if let PackageType::None = package_type {
+            match self.pnpm_workspace {
+                true => {
+                    let path = PathBuf::from("pnpm-workspace.yaml");
+                    let value = fs::read_to_string(&path)?;
+                    let mut value = serde_yaml::from_str::<serde_yaml::Value>(&value)?;
+
+                    value
+                        .get_mut("packages")
+                        .unwrap()
+                        .as_sequence_mut()
+                        .unwrap()
+                        .retain(|package| {
+                            let package = package.as_str().unwrap().to_string();
+
+                            !self.paths.contains(&package)
+                        });
+
+                    let value = serde_yaml::to_string(&value)?;
+                    fs::write(path, value)?;
+
+                    self.fixed = true;
+                }
+                false => {
+                    let path = PathBuf::from("package.json");
+                    let value = fs::read_to_string(&path)?;
+                    let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+
+                    value
+                        .get_mut("workspaces")
+                        .unwrap()
+                        .as_array_mut()
+                        .unwrap()
+                        .retain(|package| {
+                            let package = package.as_str().unwrap().to_string();
+
+                            !self.paths.contains(&package)
+                        });
+
+                    let value = serde_json::to_string_pretty(&value)?;
+                    fs::write(path, value)?;
+
+                    self.fixed = true;
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

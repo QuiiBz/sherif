@@ -8,14 +8,15 @@ use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
 use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::fs;
 use std::path::PathBuf;
 
 const PNPM_WORKSPACE: &str = "pnpm-workspace.yaml";
 
-#[derive(Debug, Deserialize)]
-struct PnpmWorkspace {
-    packages: Vec<String>,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PnpmWorkspace {
+    pub packages: Vec<String>,
 }
 
 pub fn collect_packages(args: &Args) -> Result<PackagesList> {
@@ -36,7 +37,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                 ));
         }
 
-        let root_package = std::fs::read_to_string(pnpm_workspace)?;
+        let root_package = fs::read_to_string(pnpm_workspace)?;
         let workspace: PnpmWorkspace = serde_yaml::from_str(&root_package)?;
 
         packages_list = Some(workspace.packages);
