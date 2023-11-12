@@ -50,7 +50,8 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
         |packages_issues: &mut Vec<BoxIssue>, path: PathBuf| match Package::new(path.clone()) {
             Ok(package) => packages.push(package),
             Err(error) => {
-                if error.to_string().contains("package.json") {
+                if error.to_string().contains("not found") {
+                    println!("{}", error);
                     packages_issues.push(PackagesWithoutPackageJsonIssue::new(
                         path.to_string_lossy().to_string(),
                     ));
@@ -170,8 +171,10 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     let mut all_dependencies = IndexMap::new();
 
     for package in packages {
-        if args.ignore_package.contains(package.get_name()) {
-            continue;
+        if let Some(package_name) = package.get_name() {
+            if args.ignore_package.contains(package_name) {
+                continue;
+            }
         }
 
         let package_type = PackageType::Package(package.get_path());
@@ -402,7 +405,7 @@ mod test {
 
         let mut packages = packages
             .into_iter()
-            .map(|package| package.get_name().to_string())
+            .map(|package| package.get_name().clone().unwrap().to_string())
             .collect::<Vec<_>>();
         packages.sort();
 
