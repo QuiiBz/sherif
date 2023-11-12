@@ -7,7 +7,7 @@ use indexmap::IndexMap;
 use root::RootPackage;
 use semver::VersionReq;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 pub mod root;
 
@@ -49,7 +49,7 @@ impl Package {
             return Err(anyhow!("`package.json` not found in {:?}", path));
         }
 
-        let root_package = std::fs::read_to_string(&package_path)?;
+        let root_package = fs::read_to_string(&package_path)?;
         let package: PackageInner = match serde_json::from_str(&root_package) {
             Ok(package) => package,
             Err(err) => return Err(anyhow!("Error while parsing {:?}: {}", package_path, err)),
