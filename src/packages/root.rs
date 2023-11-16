@@ -34,7 +34,7 @@ impl RootPackage {
     }
 
     pub fn check_package_manager(&self) -> Option<BoxIssue> {
-        match self.0.inner.private.is_none() {
+        match self.0.inner.package_manager.is_none() {
             true => Some(RootPackageManagerFieldIssue::new()),
             false => None,
         }
