@@ -22,6 +22,8 @@ struct PackageInner {
     name: Option<String>,
     private: Option<bool>,
     workspaces: Option<Vec<String>>,
+    #[serde(rename = "packageManager")]
+    package_manager: Option<String>,
     dependencies: Option<IndexMap<String, String>>,
     #[serde(rename = "devDependencies")]
     dev_dependencies: Option<IndexMap<String, String>>,
