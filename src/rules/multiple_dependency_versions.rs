@@ -70,16 +70,12 @@ fn format_version(
     } else {
         (version.to_string().yellow(), "∼ between".yellow())
     };
+    let version = match skip_version_color {
+        true => version.clear(),
+        false => version,
+    };
 
-    return format!(
-        "{}   {}",
-        if skip_version_color {
-            version.clear()
-        } else {
-            version
-        },
-        indicator
-    );
+    format!("{}   {}", version, indicator)
 }
 
 impl Issue for MultipleDependencyVersionsIssue {
@@ -167,7 +163,7 @@ impl Issue for MultipleDependencyVersionsIssue {
             .prompt()?;
 
         let version = select
-            .split_once(" ")
+            .split_once(' ')
             .expect("Please report this as a bug")
             .0
             .to_string();
