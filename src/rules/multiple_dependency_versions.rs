@@ -152,11 +152,10 @@ impl Issue for MultipleDependencyVersionsIssue {
             .collect::<HashSet<_>>();
         let versions = versions.iter().collect::<Vec<_>>();
         let mut render_config = RenderConfig::default_colored()
-            .with_prompt_prefix(Styled::new("?").with_fg(Color::DarkGrey))
+            .with_prompt_prefix(Styled::new("✓").with_fg(Color::DarkGrey))
             .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan));
         render_config.answered_prompt_prefix = Styled::new("✓").with_fg(Color::LightGreen);
 
-        println!();
         let select = Select::new(&message, versions)
             .with_render_config(render_config)
             .without_help_message()
