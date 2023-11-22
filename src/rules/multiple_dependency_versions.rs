@@ -1,8 +1,13 @@
-use super::{Issue, IssueLevel};
+use super::{Issue, IssueLevel, PackageType};
+use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
+use inquire::{
+    ui::{Color, RenderConfig, Styled},
+    Select,
+};
 use semver::{Comparator, Op, Prerelease, VersionReq};
-use std::{borrow::Cow, cmp::Ordering};
+use std::{borrow::Cow, cmp::Ordering, collections::HashSet, fs, path::PathBuf};
 
 const DEFAULT_COMPARATOR: Comparator = Comparator {
     op: Op::Exact,
@@ -16,6 +21,7 @@ const DEFAULT_COMPARATOR: Comparator = Comparator {
 pub struct MultipleDependencyVersionsIssue {
     name: String,
     versions: IndexMap<String, VersionReq>,
+    fixed: bool,
 }
 
 impl MultipleDependencyVersionsIssue {
@@ -44,8 +50,32 @@ impl MultipleDependencyVersionsIssue {
             ordering
         });
 
-        Box::new(Self { name, versions })
+        Box::new(Self {
+            name,
+            versions,
+            fixed: false,
+        })
     }
+}
+
+fn format_version(
+    version: &VersionReq,
+    versions: &IndexMap<String, VersionReq>,
+    skip_version_color: bool,
+) -> String {
+    let (version, indicator) = if version == versions.last().unwrap().1 {
+        (version.to_string().green(), "↑ highest".green())
+    } else if version == versions.first().unwrap().1 {
+        (version.to_string().red(), "↓ lowest".red())
+    } else {
+        (version.to_string().yellow(), "∼ between".yellow())
+    };
+    let version = match skip_version_color {
+        true => version.clear(),
+        false => version,
+    };
+
+    format!("{}   {}", version, indicator)
 }
 
 impl Issue for MultipleDependencyVersionsIssue {
@@ -54,7 +84,10 @@ impl Issue for MultipleDependencyVersionsIssue {
     }
 
     fn level(&self) -> IssueLevel {
-        IssueLevel::Error
+        match self.fixed {
+            true => IssueLevel::Fixed,
+            false => IssueLevel::Error,
+        }
     }
 
     fn message(&self) -> String {
@@ -66,14 +99,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                 let mut common_path = package.split('/').collect::<Vec<_>>();
                 let end = common_path.pop().unwrap();
 
-                let (version, indicator) = if version == self.versions.last().unwrap().1 {
-                    (version.to_string().green(), "↑ highest".green())
-                } else if version == self.versions.first().unwrap().1 {
-                    (version.to_string().red(), "↓ lowest".red())
-                } else {
-                    (version.to_string().yellow(), "∼ between".yellow())
-                };
-
+                let formatted_version = format_version(version, &self.versions, false);
                 let version_pad = " ".repeat(if end.len() >= 26 { 3 } else { 26 - end.len() });
 
                 if group.is_empty() || group != common_path {
@@ -83,28 +109,26 @@ impl Issue for MultipleDependencyVersionsIssue {
                     if group.len() == 1 && group[0] == "." {
                         let root = format!("{}{}", "./".bright_black(), end.bright_black());
 
-                        return format!("  {}  {}{}   {}", root, version_pad, version, indicator);
+                        return format!("  {}  {}{}", root, version_pad, formatted_version);
                     }
 
                     return format!(
                         "  {}
-      {}{}{}   {}",
+      {}{}{}",
                         root,
                         end.bright_black(),
                         version_pad,
-                        version,
-                        indicator
+                        formatted_version
                     );
                 }
 
                 group = common_path;
 
                 format!(
-                    "      {}{}{}   {}",
+                    "      {}{}{}",
                     end.bright_black(),
                     version_pad,
-                    version,
-                    indicator
+                    formatted_version
                 )
             })
             .collect::<Vec<String>>()
@@ -116,6 +140,61 @@ impl Issue for MultipleDependencyVersionsIssue {
             "Dependency {} has multiple versions defined in the workspace.",
             self.name
         ))
+    }
+
+    fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
+        let message = format!("Select the version of {} to use:", self.name).bold();
+
+        let versions = self
+            .versions
+            .values()
+            .map(|version| format_version(version, &self.versions, true))
+            .collect::<HashSet<_>>();
+        let versions = versions.iter().collect::<Vec<_>>();
+        let mut render_config = RenderConfig::default_colored()
+            .with_prompt_prefix(Styled::new("✓").with_fg(Color::DarkGrey))
+            .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan));
+        render_config.answered_prompt_prefix = Styled::new("✓").with_fg(Color::LightGreen);
+
+        let select = Select::new(&message, versions)
+            .with_render_config(render_config)
+            .without_help_message()
+            .prompt()?;
+
+        let version = select
+            .split_once(' ')
+            .expect("Please report this as a bug")
+            .0
+            .to_string();
+
+        for package in self.versions.keys() {
+            let path = PathBuf::from(package).join("package.json");
+            let value = fs::read_to_string(&path)?;
+            let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+
+            if let Some(dependencies) = value.get_mut("dependencies") {
+                let dependencies = dependencies.as_object_mut().unwrap();
+
+                if let Some(dependency) = dependencies.get_mut(&self.name) {
+                    *dependency = serde_json::Value::String(version.to_string());
+                }
+            }
+
+            if let Some(dev_dependencies) = value.get_mut("devDependencies") {
+                let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
+
+                if let Some(dev_dependency) = dev_dependencies.get_mut(&self.name) {
+                    *dev_dependency = serde_json::Value::String(version.to_string());
+                }
+            }
+
+            let value = serde_json::to_string_pretty(&value)?;
+            fs::write(path, value)?;
+        }
+
+        self.fixed = true;
+
+        Ok(())
     }
 }
 
