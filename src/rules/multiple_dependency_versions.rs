@@ -72,7 +72,7 @@ fn format_version(
     };
 
     return format!(
-        "{}    {}",
+        "{}   {}",
         if skip_version_color {
             version.clear()
         } else {
