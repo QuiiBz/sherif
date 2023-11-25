@@ -31,7 +31,7 @@ pnpm dlx sherif@latest
 npx sherif@latest
 ```
 
-We recommend running Sherif in your CI once all errors are fixed. Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
+We recommend running Sherif in your CI once [all errors are fixed](#autofix). Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
 
 <details>
 
@@ -55,6 +55,14 @@ jobs:
 ```
 
 </details>
+
+## Autofix
+
+Most issues can be automatically fixed by using the `--fix` flag. Note that autofix is disabled in CI environments (when `$CI` is set):
+
+```bash
+sherif --fix
+```
 
 ## Rules
 
