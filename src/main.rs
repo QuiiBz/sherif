@@ -1,9 +1,8 @@
-use crate::args::Args;
 use crate::printer::print_success;
 use crate::rules::IssueLevel;
+use crate::{args::Args, printer::print_error};
 use clap::Parser;
 use collect::{collect_issues, collect_packages};
-use colored::Colorize;
 use printer::{print_footer, print_issues};
 use std::time::Instant;
 
@@ -14,19 +13,26 @@ mod plural;
 mod printer;
 mod rules;
 
+fn is_ci() -> bool {
+    std::env::var("CI").is_ok()
+}
+
 fn main() {
     let now = Instant::now();
     let args = Args::parse();
+
+    if args.fix && is_ci() {
+        print_error(
+            "Failed to fix issues",
+            "Cannot fix issues inside a CI environment",
+        );
+        std::process::exit(1);
+    }
+
     let packages_list = match collect_packages(&args) {
         Ok(result) => result,
         Err(error) => {
-            eprintln!();
-            eprintln!(
-                " {} {}",
-                IssueLevel::Error,
-                "Failed to collect packages".bold()
-            );
-            eprintln!("   {}", error.to_string().bright_black());
+            print_error("Failed to collect packages", error.to_string().as_str());
             std::process::exit(1);
         }
     };
@@ -36,9 +42,7 @@ fn main() {
 
     if args.fix {
         if let Err(error) = issues.fix() {
-            eprintln!();
-            eprintln!(" {} {}", IssueLevel::Error, "Failed to fix issues".bold());
-            eprintln!("   {}", error.to_string().bright_black());
+            print_error("Failed to fix issues", error.to_string().as_str());
             std::process::exit(1);
         }
     }
@@ -55,9 +59,7 @@ fn main() {
     let fixed = issues.len_by_level(IssueLevel::Fixed);
 
     if let Err(error) = print_issues(issues) {
-        eprintln!();
-        eprintln!(" {} {}", IssueLevel::Error, "Failed to print issues".bold());
-        eprintln!("   {}", error.to_string().bright_black());
+        print_error("Failed to print issues", error.to_string().as_str());
         std::process::exit(1);
     }
 

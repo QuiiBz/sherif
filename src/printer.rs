@@ -1,6 +1,6 @@
 use crate::{
     plural::Pluralize,
-    rules::{IssuesList, ERROR, SUCCESS, WARNING},
+    rules::{IssueLevel, IssuesList, ERROR, SUCCESS, WARNING},
 };
 use anyhow::Result;
 use colored::Colorize;
@@ -10,6 +10,12 @@ use std::time::Instant;
 pub fn print_success() {
     println!();
     println!("{}", format!("{} No issues found", SUCCESS).green());
+}
+
+pub fn print_error(title: &str, message: &str) {
+    eprintln!();
+    eprintln!(" {} {}", IssueLevel::Error, title.bold());
+    eprintln!("   {}", message.bright_black());
 }
 
 pub fn print_issues(issues: IssuesList) -> Result<()> {
