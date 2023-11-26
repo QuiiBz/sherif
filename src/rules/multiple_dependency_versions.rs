@@ -1,4 +1,5 @@
 use super::{Issue, IssueLevel, PackageType};
+use crate::packages::semversion::SemVersion;
 use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
@@ -6,49 +7,18 @@ use inquire::{
     ui::{Color, RenderConfig, Styled},
     Select,
 };
-use semver::{Comparator, Op, Prerelease, VersionReq};
-use std::{borrow::Cow, cmp::Ordering, collections::HashSet, fs, path::PathBuf};
-
-const DEFAULT_COMPARATOR: Comparator = Comparator {
-    op: Op::Exact,
-    major: 0,
-    minor: None,
-    patch: None,
-    pre: Prerelease::EMPTY,
-};
+use std::{borrow::Cow, fs, path::PathBuf};
 
 #[derive(Debug)]
 pub struct MultipleDependencyVersionsIssue {
     name: String,
-    versions: IndexMap<String, VersionReq>,
+    versions: IndexMap<String, SemVersion>,
     fixed: bool,
 }
 
 impl MultipleDependencyVersionsIssue {
-    pub fn new(name: String, mut versions: IndexMap<String, VersionReq>) -> Box<Self> {
-        versions.sort_by(|_, a, _, b| {
-            let a_comparator = a.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
-            let b_comparator = b.comparators.get(0).cloned().unwrap_or(DEFAULT_COMPARATOR);
-
-            let mut ordering = Ordering::Equal;
-
-            ordering = match a_comparator.patch.cmp(&b_comparator.patch) {
-                Ordering::Equal => ordering,
-                ordering => ordering,
-            };
-
-            ordering = match a_comparator.minor.cmp(&b_comparator.minor) {
-                Ordering::Equal => ordering,
-                ordering => ordering,
-            };
-
-            ordering = match a_comparator.major.cmp(&b_comparator.major) {
-                Ordering::Equal => ordering,
-                ordering => ordering,
-            };
-
-            ordering
-        });
+    pub fn new(name: String, mut versions: IndexMap<String, SemVersion>) -> Box<Self> {
+        versions.sort_by(|_, a, _, b| a.cmp(b));
 
         Box::new(Self {
             name,
@@ -59,8 +29,8 @@ impl MultipleDependencyVersionsIssue {
 }
 
 fn format_version(
-    version: &VersionReq,
-    versions: &IndexMap<String, VersionReq>,
+    version: &SemVersion,
+    versions: &IndexMap<String, SemVersion>,
     skip_version_color: bool,
 ) -> String {
     let (version, indicator) = if version == versions.last().unwrap().1 {
@@ -145,12 +115,13 @@ impl Issue for MultipleDependencyVersionsIssue {
     fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
         let message = format!("Select the version of {} to use:", self.name).bold();
 
-        let versions = self
+        let mut versions = self
             .versions
             .values()
             .map(|version| format_version(version, &self.versions, true))
-            .collect::<HashSet<_>>();
-        let versions = versions.iter().collect::<Vec<_>>();
+            .collect::<Vec<_>>();
+        versions.dedup();
+
         let mut render_config = RenderConfig::default_colored()
             .with_prompt_prefix(Styled::new("✓").with_fg(Color::DarkGrey))
             .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan));
@@ -207,9 +178,9 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "./packages/package-a".into() => VersionReq::parse("1.2.3").unwrap(),
-                "./packages/package-b".into() => VersionReq::parse("1.2.4").unwrap(),
-                "./package-c".into() => VersionReq::parse("1.2.5").unwrap(),
+                "./packages/package-a".into() => SemVersion::parse("1.2.3").unwrap(),
+                "./packages/package-b".into() => SemVersion::parse("1.2.4").unwrap(),
+                "./package-c".into() => SemVersion::parse("1.2.5").unwrap(),
             },
         );
 
@@ -227,7 +198,7 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "./package-a".into() => VersionReq::parse("1.2.3").unwrap(),
+                "./package-a".into() => SemVersion::parse("1.2.3").unwrap(),
             },
         );
 
@@ -240,9 +211,9 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "./apps/package-a".into() => VersionReq::parse("5.6.3").unwrap(),
-                "./apps/package-b".into() => VersionReq::parse("1.2.3").unwrap(),
-                "./packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
+                "./apps/package-a".into() => SemVersion::parse("5.6.3").unwrap(),
+                "./apps/package-b".into() => SemVersion::parse("1.2.3").unwrap(),
+                "./packages/package-c".into() => SemVersion::parse("3.1.6").unwrap(),
             },
         );
 
@@ -255,9 +226,9 @@ mod test {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
             indexmap::indexmap! {
-                "./package-a".into() => VersionReq::parse("1.2.3").unwrap(),
-                "./packages/package-b".into() => VersionReq::parse("3.1.6").unwrap(),
-                "./packages/package-c".into() => VersionReq::parse("3.1.6").unwrap(),
+                "./package-a".into() => SemVersion::parse("1.2.3").unwrap(),
+                "./packages/package-b".into() => SemVersion::parse("3.1.6").unwrap(),
+                "./packages/package-c".into() => SemVersion::parse("3.1.6").unwrap(),
             },
         );
 

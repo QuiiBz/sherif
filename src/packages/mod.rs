@@ -1,3 +1,4 @@
+use self::semversion::SemVersion;
 use crate::rules::{
     empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
     BoxIssue,
@@ -5,11 +6,11 @@ use crate::rules::{
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use root::RootPackage;
-use semver::VersionReq;
 use serde::Deserialize;
 use std::{fs, path::PathBuf};
 
 pub mod root;
+pub mod semversion;
 
 pub struct PackagesList {
     pub root_package: RootPackage,
@@ -117,13 +118,13 @@ impl Package {
     fn get_deps(
         &self,
         deps: &Option<IndexMap<String, String>>,
-    ) -> Option<IndexMap<String, VersionReq>> {
+    ) -> Option<IndexMap<String, SemVersion>> {
         if let Some(dependencies) = deps {
             let mut versioned_dependencies =
-                IndexMap::<String, VersionReq>::with_capacity(dependencies.len());
+                IndexMap::<String, SemVersion>::with_capacity(dependencies.len());
 
             for (name, version) in dependencies {
-                if let Ok(version) = VersionReq::parse(version) {
+                if let Ok(version) = SemVersion::parse(version) {
                     versioned_dependencies.insert(name.clone(), version);
                 }
             }
@@ -134,11 +135,11 @@ impl Package {
         None
     }
 
-    pub fn get_dependencies(&self) -> Option<IndexMap<String, VersionReq>> {
+    pub fn get_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
         self.get_deps(&self.inner.dependencies)
     }
 
-    pub fn get_dev_dependencies(&self) -> Option<IndexMap<String, VersionReq>> {
+    pub fn get_dev_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
         self.get_deps(&self.inner.dev_dependencies)
     }
 }
