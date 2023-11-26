@@ -73,4 +73,11 @@ impl SemVersion {
             new_ordering => new_ordering,
         }
     }
+
+    pub fn is_valid(&self) -> bool {
+        match self {
+            Self::Exact(_) => true,
+            Self::Range(version) => !version.comparators.is_empty(),
+        }
+    }
 }

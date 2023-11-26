@@ -209,10 +209,12 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
 
         for (name, version) in joined_dependencies {
-            all_dependencies
-                .entry(name)
-                .or_insert_with(IndexMap::new)
-                .insert(package.get_path(), version);
+            if version.is_valid() {
+                all_dependencies
+                    .entry(name)
+                    .or_insert_with(IndexMap::new)
+                    .insert(package.get_path(), version);
+            }
         }
     }
 

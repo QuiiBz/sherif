@@ -58,7 +58,7 @@ pub trait Issue {
 
 pub type BoxIssue = Box<dyn Issue>;
 
-#[derive(Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum PackageType {
     None,
     Root,
