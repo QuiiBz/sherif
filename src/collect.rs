@@ -209,7 +209,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
 
         for (name, version) in joined_dependencies {
-            if !version.comparators.is_empty() {
+            if version.is_valid() {
                 all_dependencies
                     .entry(name)
                     .or_insert_with(IndexMap::new)

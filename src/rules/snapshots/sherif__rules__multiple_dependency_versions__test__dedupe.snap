@@ -2,7 +2,7 @@
 source: src/rules/multiple_dependency_versions.rs
 expression: issue.message()
 ---
-  ./package-a                   ^1.2.3   ↓ lowest
+  ./package-a                   1.2.3   ↓ lowest
   ./packages
-      package-b                 ^3.1.6   ↑ highest
-      package-c                 ^3.1.6   ↑ highest
+      package-b                 3.1.6   ↑ highest
+      package-c                 3.1.6   ↑ highest

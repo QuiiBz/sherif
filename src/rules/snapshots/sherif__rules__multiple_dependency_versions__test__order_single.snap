@@ -2,4 +2,4 @@
 source: src/rules/multiple_dependency_versions.rs
 expression: issue.message()
 ---
-  ./package-a                   ^1.2.3   ↑ highest
+  ./package-a                   1.2.3   ↑ highest
