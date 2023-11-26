@@ -61,23 +61,16 @@ impl SemVersion {
     }
 
     pub fn cmp(&self, other: &Self) -> Ordering {
-        let mut ordering = Ordering::Equal;
-
-        ordering = match self.patch().cmp(&other.patch()) {
-            Ordering::Equal => ordering,
-            new_ordering => new_ordering,
-        };
+        let mut ordering = self.patch().cmp(&other.patch());
 
         ordering = match self.minor().cmp(&other.minor()) {
             Ordering::Equal => ordering,
             new_ordering => new_ordering,
         };
 
-        ordering = match self.major().cmp(&other.major()) {
+        match self.major().cmp(&other.major()) {
             Ordering::Equal => ordering,
             new_ordering => new_ordering,
-        };
-
-        ordering
+        }
     }
 }
