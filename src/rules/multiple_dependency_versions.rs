@@ -222,6 +222,21 @@ mod test {
     }
 
     #[test]
+    fn exact_and_range() {
+        let issue = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            indexmap::indexmap! {
+                "./apps/package-a".into() => SemVersion::parse("5.6.3").unwrap(),
+                "./apps/package-b".into() => SemVersion::parse("^1.2.3").unwrap(),
+                "./packages/package-c".into() => SemVersion::parse("~3.1.6").unwrap(),
+            },
+        );
+
+        colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
+    }
+
+    #[test]
     fn dedupe() {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),
