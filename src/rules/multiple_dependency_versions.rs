@@ -4,7 +4,7 @@ use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
 use inquire::{
-    ui::{Color, RenderConfig, Styled},
+    ui::{Color, RenderConfig, StyleSheet, Styled},
     Select,
 };
 use std::{borrow::Cow, fs, path::PathBuf};
@@ -124,46 +124,50 @@ impl Issue for MultipleDependencyVersionsIssue {
 
         let mut render_config = RenderConfig::default_colored()
             .with_prompt_prefix(Styled::new("✓").with_fg(Color::DarkGrey))
-            .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan));
+            .with_help_message(StyleSheet::new().with_fg(Color::DarkGrey))
+            .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan))
+            .with_canceled_prompt_indicator(Styled::new("✗").with_fg(Color::LightRed));
         render_config.answered_prompt_prefix = Styled::new("✓").with_fg(Color::LightGreen);
 
         let select = Select::new(&message, versions)
             .with_render_config(render_config)
-            .without_help_message()
-            .prompt()?;
+            .with_help_message("Enter to select, Esc to skip")
+            .prompt_skippable()?;
 
-        let version = select
-            .split_once(' ')
-            .expect("Please report this as a bug")
-            .0
-            .to_string();
+        if let Some(select) = select {
+            let version = select
+                .split_once(' ')
+                .expect("Please report this as a bug")
+                .0
+                .to_string();
 
-        for package in self.versions.keys() {
-            let path = PathBuf::from(package).join("package.json");
-            let value = fs::read_to_string(&path)?;
-            let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+            for package in self.versions.keys() {
+                let path = PathBuf::from(package).join("package.json");
+                let value = fs::read_to_string(&path)?;
+                let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
 
-            if let Some(dependencies) = value.get_mut("dependencies") {
-                let dependencies = dependencies.as_object_mut().unwrap();
+                if let Some(dependencies) = value.get_mut("dependencies") {
+                    let dependencies = dependencies.as_object_mut().unwrap();
 
-                if let Some(dependency) = dependencies.get_mut(&self.name) {
-                    *dependency = serde_json::Value::String(version.to_string());
+                    if let Some(dependency) = dependencies.get_mut(&self.name) {
+                        *dependency = serde_json::Value::String(version.to_string());
+                    }
                 }
+
+                if let Some(dev_dependencies) = value.get_mut("devDependencies") {
+                    let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
+
+                    if let Some(dev_dependency) = dev_dependencies.get_mut(&self.name) {
+                        *dev_dependency = serde_json::Value::String(version.to_string());
+                    }
+                }
+
+                let value = serde_json::to_string_pretty(&value)?;
+                fs::write(path, value)?;
             }
 
-            if let Some(dev_dependencies) = value.get_mut("devDependencies") {
-                let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
-
-                if let Some(dev_dependency) = dev_dependencies.get_mut(&self.name) {
-                    *dev_dependency = serde_json::Value::String(version.to_string());
-                }
-            }
-
-            let value = serde_json::to_string_pretty(&value)?;
-            fs::write(path, value)?;
+            self.fixed = true;
         }
-
-        self.fixed = true;
 
         Ok(())
     }
