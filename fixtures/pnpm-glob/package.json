@@ -1,0 +1,5 @@
+{
+  "name": "pnpm-glob",
+  "private": true,
+  "packageManager": "pnpm@1.2.3"
+}
