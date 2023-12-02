@@ -115,7 +115,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                                             && package
                                                 .file_name()
                                                 .to_string_lossy()
-                                                .starts_with(&directory_match);
+                                                .starts_with(directory_match);
                                     }
 
                                     true
