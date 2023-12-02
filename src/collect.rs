@@ -9,7 +9,7 @@ use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::fs::{self};
 use std::path::PathBuf;
 
 const PNPM_WORKSPACE: &str = "pnpm-workspace.yaml";
@@ -87,20 +87,49 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
 
         for package in &packages {
             if package.ends_with('*') {
-                let directory = package.trim_end_matches('*').trim_end_matches('/');
-                let directory = args.path.join(directory);
+                let directory_match = package.trim_end_matches('*');
 
-                let packages = match directory.read_dir() {
-                    Ok(packages) => packages,
-                    Err(_) => {
-                        non_existant_paths.push(package.to_string());
-                        continue;
+                let packages = match directory_match.ends_with('/') {
+                    true => {
+                        let directory = directory_match.trim_end_matches('/');
+                        let directory = args.path.join(directory);
+
+                        match directory.read_dir() {
+                            Ok(packages) => packages.into_iter().collect::<Result<Vec<_>, _>>()?,
+                            Err(_) => {
+                                non_existant_paths.push(package.to_string());
+                                continue;
+                            }
+                        }
+                    }
+                    false => {
+                        let directory = args.path.join(directory_match);
+                        let directory = directory.parent().unwrap().to_path_buf();
+
+                        match directory.read_dir() {
+                            Ok(packages) => packages
+                                .into_iter()
+                                .filter(|package| {
+                                    if let Ok(package) = package {
+                                        return package.file_type().unwrap().is_dir()
+                                            && package
+                                                .file_name()
+                                                .to_string_lossy()
+                                                .starts_with(&directory_match);
+                                    }
+
+                                    true
+                                })
+                                .collect::<Result<Vec<_>, _>>()?,
+                            Err(_) => {
+                                non_existant_paths.push(package.to_string());
+                                continue;
+                            }
+                        }
                     }
                 };
 
                 for package in packages {
-                    let package = package?;
-
                     if package.file_type()?.is_dir() {
                         let path = package.path();
                         let real_path = path.to_string_lossy().to_string();
@@ -514,5 +543,23 @@ mod test {
             issues.get(&PackageType::None).unwrap()[0].name(),
             "multiple-dependency-versions"
         );
+    }
+
+    #[test]
+    fn collect_pnpm_glob() {
+        let args = Args {
+            path: "fixtures/pnpm-glob".into(),
+            fix: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "pnpm-glob");
+        assert_eq!(packages_list.packages.len(), 2);
+
+        let issues = collect_issues(&args, packages_list);
+        assert_eq!(issues.total_len(), 0);
     }
 }
