@@ -142,4 +142,21 @@ impl Package {
     pub fn get_dev_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
         self.get_deps(&self.inner.dev_dependencies)
     }
+
+    pub fn is_ignored(&self, ignored_packages: &[String]) -> bool {
+        match self.get_name() {
+            Some(name) => ignored_packages.iter().any(|ignored_package| {
+                match ignored_package.ends_with('*') {
+                    true => {
+                        let ignored_package = ignored_package.trim_end_matches('*');
+
+                        name.starts_with(ignored_package)
+                            || self.get_path().starts_with(ignored_package)
+                    }
+                    false => ignored_package == name || ignored_package == &self.get_path(),
+                }
+            }),
+            None => false,
+        }
+    }
 }
