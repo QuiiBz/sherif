@@ -73,11 +73,13 @@ You can ignore a specific rule by using `--ignore-rule <name>` (or `-r <name>`):
 sherif -r packages-without-package-json -r root-package-manager-field
 ```
 
-You can ignore all issues in a package by using `--ignore-package <name>` (or `-p <name>`):
+You can ignore all issues in a package by using `--ignore-package <pathOrName>` (or `-p <pathOrName>`):
 
 ```bash
-# Ignore all issues in the package
+# Ignore all issues in the `@repo/tools` package
 sherif -p @repo/tools
+# Ignore all issues for packages inside `./integrations/*`
+sherif -p ./integrations/*
 ```
 
 > **Note**

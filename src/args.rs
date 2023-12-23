@@ -15,7 +15,7 @@ pub struct Args {
     #[arg(long, short)]
     pub ignore_dependency: Vec<String>,
 
-    /// Ignore rules for the given package name.
+    /// Ignore rules for the given package name or path.
     #[arg(long, short = 'p')]
     pub ignore_package: Vec<String>,
 

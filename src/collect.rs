@@ -199,10 +199,8 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     let mut all_dependencies = IndexMap::new();
 
     for package in packages {
-        if let Some(package_name) = package.get_name() {
-            if args.ignore_package.contains(package_name) {
-                continue;
-            }
+        if package.is_ignored(&args.ignore_package) {
+            continue;
         }
 
         let package_type = PackageType::Package(package.get_path());
