@@ -30,3 +30,10 @@ serde_yaml = "0.9.25"
 [dev-dependencies]
 debugless-unwrap = "0.0.4"
 insta = "1.32.0"
+
+[profile.release]
+strip = "symbols"
+opt-level = "z"
+lto = "thin"
+codegen-units = 1
+panic = "abort"
