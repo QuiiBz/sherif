@@ -143,6 +143,10 @@ impl Package {
         self.get_deps(&self.inner.dev_dependencies)
     }
 
+    pub fn get_peer_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
+        self.get_deps(&self.inner.peer_dependencies)
+    }
+
     pub fn is_ignored(&self, ignored_packages: &[String]) -> bool {
         match self.get_name() {
             Some(name) => ignored_packages.iter().any(|ignored_package| {

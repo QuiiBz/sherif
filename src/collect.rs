@@ -235,6 +235,10 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
             joined_dependencies.extend(dev_dependencies);
         }
 
+        if let Some(peer_dependencies) = package.get_peer_dependencies() {
+            joined_dependencies.extend(peer_dependencies);
+        }
+
         for (name, version) in joined_dependencies {
             if version.is_valid() {
                 all_dependencies
