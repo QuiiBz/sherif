@@ -79,7 +79,7 @@ You can ignore all issues in a package by using `--ignore-package <pathOrName>` 
 # Ignore all issues in the `@repo/tools` package
 sherif -p @repo/tools
 # Ignore all issues for packages inside `./integrations/*`
-sherif -p ./integrations/*
+sherif -p "./integrations/*"
 ```
 
 > **Note**
