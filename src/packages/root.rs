@@ -1,4 +1,4 @@
-use super::Package;
+use super::{Package, Workspaces};
 use crate::rules::{
     root_package_dependencies::RootPackageDependenciesIssue,
     root_package_manager_field::RootPackageManagerFieldIssue,
@@ -23,7 +23,13 @@ impl RootPackage {
     }
 
     pub fn get_workspaces(&self) -> Option<Vec<String>> {
-        self.0.inner.workspaces.clone()
+        match &self.0.inner.workspaces {
+            Some(workspaces) => match workspaces {
+                Workspaces::Default(workspaces) => Some(workspaces.clone()),
+                Workspaces::Yarn { packages, .. } => Some(packages.clone()),
+            },
+            None => None,
+        }
     }
 
     pub fn check_private(&self) -> Option<BoxIssue> {

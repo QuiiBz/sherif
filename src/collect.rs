@@ -367,6 +367,31 @@ mod test {
     }
 
     #[test]
+    fn collect_packages_yarn_nohoist() {
+        let args = Args {
+            path: "fixtures/yarn-nohoist".into(),
+            fix: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let result = collect_packages(&args);
+
+        assert!(result.is_ok());
+        let PackagesList {
+            root_package,
+            packages,
+            packages_issues,
+        } = result.unwrap();
+
+        assert_eq!(root_package.get_name(), "yarn-nohoist");
+        assert_eq!(packages.len(), 3);
+        assert_eq!(packages_issues.len(), 1);
+        assert!(packages_issues[0].name() == "non-existant-packages");
+    }
+
+    #[test]
     fn collect_packages_no_workspace_pnpm() {
         let args = Args {
             path: "fixtures/no-workspace-pnpm".into(),
