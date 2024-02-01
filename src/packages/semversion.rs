@@ -35,7 +35,7 @@ impl SemVersion {
             Self::Exact(version) => version.patch,
             Self::Range(version) => version
                 .comparators
-                .get(0)
+                .first()
                 .map_or(0, |comparator| comparator.patch.unwrap_or(0)),
         }
     }
@@ -45,7 +45,7 @@ impl SemVersion {
             Self::Exact(version) => version.minor,
             Self::Range(version) => version
                 .comparators
-                .get(0)
+                .first()
                 .map_or(0, |comparator| comparator.minor.unwrap_or(0)),
         }
     }
@@ -55,7 +55,7 @@ impl SemVersion {
             Self::Exact(version) => version.major,
             Self::Range(version) => version
                 .comparators
-                .get(0)
+                .first()
                 .map_or(0, |comparator| comparator.major),
         }
     }
