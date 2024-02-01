@@ -1,5 +1,5 @@
 use super::{Issue, IssueLevel, PackageType};
-use crate::packages::semversion::SemVersion;
+use crate::{json, packages::semversion::SemVersion};
 use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
@@ -144,7 +144,7 @@ impl Issue for MultipleDependencyVersionsIssue {
             for package in self.versions.keys() {
                 let path = PathBuf::from(package).join("package.json");
                 let value = fs::read_to_string(&path)?;
-                let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+                let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
 
                 if let Some(dependencies) = value.get_mut("dependencies") {
                     let dependencies = dependencies.as_object_mut().unwrap();
@@ -162,7 +162,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                     }
                 }
 
-                let value = serde_json::to_string_pretty(&value)?;
+                let value = json::serialize(&value, &indent)?;
                 fs::write(path, value)?;
             }
 

@@ -1,4 +1,5 @@
 use super::{Issue, IssueLevel, PackageType};
+use crate::json;
 use anyhow::Result;
 use colored::Colorize;
 use std::{borrow::Cow, fs, path::PathBuf};
@@ -127,7 +128,7 @@ impl Issue for NonExistantPackagesIssue {
                 false => {
                     let path = PathBuf::from("package.json");
                     let value = fs::read_to_string(&path)?;
-                    let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+                    let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
 
                     value
                         .get_mut("workspaces")
@@ -140,7 +141,7 @@ impl Issue for NonExistantPackagesIssue {
                             !self.paths.contains(&package)
                         });
 
-                    let value = serde_json::to_string_pretty(&value)?;
+                    let value = json::serialize(&value, &indent)?;
                     fs::write(path, value)?;
 
                     self.fixed = true;
