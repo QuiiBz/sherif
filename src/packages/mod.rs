@@ -19,10 +19,20 @@ pub struct PackagesList {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(untagged)]
+pub enum Workspaces {
+    Default(Vec<String>),
+    /// https://classic.yarnpkg.com/blog/2018/02/15/nohoist
+    Yarn {
+        packages: Vec<String>,
+    },
+}
+
+#[derive(Deserialize, Debug)]
 struct PackageInner {
     name: Option<String>,
     private: Option<bool>,
-    workspaces: Option<Vec<String>>,
+    workspaces: Option<Workspaces>,
     #[serde(rename = "packageManager")]
     package_manager: Option<String>,
     dependencies: Option<IndexMap<String, String>>,
@@ -53,6 +63,7 @@ impl Package {
         }
 
         let root_package = fs::read_to_string(&package_path)?;
+        println!("HELLO {:?}", root_package);
         let package: PackageInner = match serde_json::from_str(&root_package) {
             Ok(package) => package,
             Err(err) => return Err(anyhow!("Error while parsing {:?}: {}", package_path, err)),

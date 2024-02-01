@@ -1,0 +1,12 @@
+{
+  "name": "yarn-nohoist",
+  "workspaces": {
+    "packages": [
+      "packages/*",
+      "docs",
+      "examples/*",
+      "website"
+    ],
+    "nohoist": []
+  }
+}
