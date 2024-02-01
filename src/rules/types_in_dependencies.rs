@@ -1,4 +1,5 @@
 use super::{Issue, IssueLevel, PackageType};
+use crate::json;
 use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
@@ -84,7 +85,7 @@ impl Issue for TypesInDependenciesIssue {
         if let PackageType::Package(path) = package_type {
             let path = PathBuf::from(path).join("package.json");
             let value = fs::read_to_string(&path)?;
-            let mut value = serde_json::from_str::<serde_json::Value>(&value)?;
+            let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
 
             let dependencies = value
                 .get_mut("dependencies")
@@ -118,7 +119,7 @@ impl Issue for TypesInDependenciesIssue {
                 dev_dependencies.insert(package, version);
             }
 
-            let value = serde_json::to_string_pretty(&value)?;
+            let value = json::serialize(&value, &indent)?;
             fs::write(path, value)?;
 
             self.fixed = true;

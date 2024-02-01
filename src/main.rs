@@ -8,6 +8,7 @@ use std::time::Instant;
 
 mod args;
 mod collect;
+mod json;
 mod packages;
 mod plural;
 mod printer;
