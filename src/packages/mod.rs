@@ -63,7 +63,6 @@ impl Package {
         }
 
         let root_package = fs::read_to_string(&package_path)?;
-        println!("HELLO {:?}", root_package);
         let package: PackageInner = match serde_json::from_str(&root_package) {
             Ok(package) => package,
             Err(err) => return Err(anyhow!("Error while parsing {:?}: {}", package_path, err)),
