@@ -52,7 +52,7 @@ jobs:
             }
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set the release version
         shell: bash
@@ -73,10 +73,9 @@ jobs:
           use-cross: ${{ matrix.build.OS == 'ubuntu-20.04' }} # use `cross` for Linux builds
 
       - name: Install node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16"
-          registry-url: "https://registry.npmjs.org"
+          node-version: 20
 
       - name: Publish to NPM
         shell: bash
@@ -122,13 +121,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
-          registry-url: https://registry.npmjs.org
+          node-version: 20
 
       - name: Publish the package
         shell: bash
