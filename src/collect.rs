@@ -1,6 +1,7 @@
 use crate::args::Args;
 use crate::packages::root::RootPackage;
 use crate::packages::{Package, PackagesList};
+use crate::printer::print_error;
 use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::non_existant_packages::NonExistantPackagesIssue;
 use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
@@ -54,6 +55,8 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                     packages_issues.push(PackagesWithoutPackageJsonIssue::new(
                         path.to_string_lossy().to_string(),
                     ));
+                } else {
+                    print_error("Failed to collect package", &error.to_string());
                 }
             }
         };
