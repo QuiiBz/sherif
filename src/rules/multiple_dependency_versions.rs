@@ -115,9 +115,11 @@ impl Issue for MultipleDependencyVersionsIssue {
     fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
         let message = format!("Select the version of {} to use:", self.name).bold();
 
-        let mut versions = self
-            .versions
-            .values()
+        let mut sorted_versions = self.versions.values().collect::<Vec<_>>();
+        sorted_versions.sort_by(|a, b| b.cmp(a));
+
+        let mut versions = sorted_versions
+            .iter()
             .map(|version| format_version(version, &self.versions, true))
             .collect::<Vec<_>>();
         versions.dedup();
