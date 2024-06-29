@@ -14,7 +14,7 @@ pub fn ask () {
             install();
         }
         Ok(false) => {
-            println!("Run `install` manually.");
+            println!("Don't forget to run `install` manually.");
         }
         Err(_) => {
             println!("Something went wrong. Run `install` manually.");
