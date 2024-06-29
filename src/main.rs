@@ -8,6 +8,7 @@ use std::time::Instant;
 
 mod args;
 mod collect;
+mod install;
 mod json;
 mod packages;
 mod plural;
@@ -69,4 +70,6 @@ fn main() {
     if errors > 0 {
         std::process::exit(1);
     }
+
+    install::ask();
 }
