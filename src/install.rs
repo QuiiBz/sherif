@@ -23,9 +23,13 @@ pub fn ask () {
 }
 
 fn install () {
-    println!("Running `install`...");
+    let mut package_manager = detect_package_manager();
 
-    let package_manager = detect_package_manager();
+    if package_manager.is_empty() {
+        println!("Could not auto-detect package manager.");
+       package_manager = manual_select_package_manager();
+    }
+
     println!("Running install using: {}...", package_manager);
 
     Command::new(package_manager)
@@ -49,7 +53,7 @@ fn detect_package_manager () -> String {
         return "pnpm".to_string();
     } 
 
-    manual_select_package_manager()
+    return "".to_string();
 }
 
 fn manual_select_package_manager () -> String {
