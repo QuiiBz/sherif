@@ -76,3 +76,27 @@ fn manual_select_package_manager () -> String {
         }
     }
 }
+
+#[cfg(test)]
+
+mod test {
+    #[test]
+    fn test_detect_package_manager() {
+        use super::*;
+        use std::fs;
+
+        fs::File::create("package-lock.json").unwrap();
+        assert_eq!(detect_package_manager(), "npm");
+
+        fs::remove_file("package-lock.json").unwrap();
+        fs::File::create("yarn.lock").unwrap();
+        assert_eq!(detect_package_manager(), "yarn");
+
+        fs::remove_file("yarn.lock").unwrap();
+        fs::File::create("pnpm-lock.yaml").unwrap();
+        assert_eq!(detect_package_manager(), "pnpm");
+
+        fs::remove_file("pnpm-lock.yaml").unwrap();
+        assert_eq!(detect_package_manager(), "");
+    }
+}
