@@ -8,7 +8,7 @@ pub struct Args {
     pub path: PathBuf,
 
     /// Fix the issues automatically, if possible.
-    #[arg(long)]
+    #[arg(long, short)]
     pub fix: bool,
 
     /// Ignore the `multiple-dependency-versions` rule for the given dependency name.
