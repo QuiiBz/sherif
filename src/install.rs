@@ -1,28 +1,10 @@
 use std::{fs, process::Command};
 
-use inquire::{Confirm, Select};
+use inquire::Select;
 use colored::Colorize;
 
 
-pub fn ask () {
-    let should_run_install = Confirm::new("Do you want to run `install`")
-        .with_default(true)
-        .prompt();
- 
-    match should_run_install {
-        Ok(true) => {
-            install();
-        }
-        Ok(false) => {
-            println!("Don't forget to run `install` manually.");
-        }
-        Err(_) => {
-            println!("Something went wrong. Run `install` manually.");
-        }
-    }
-}
-
-fn install () {
+pub fn run () {
     let mut package_manager = detect_package_manager();
 
     if package_manager.is_empty() {

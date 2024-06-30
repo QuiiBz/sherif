@@ -11,6 +11,10 @@ pub struct Args {
     #[arg(long, short)]
     pub fix: bool,
 
+    /// Don't run the package manager install command.
+    #[arg(long)]
+    pub no_install: bool,
+
     /// Ignore the `multiple-dependency-versions` rule for the given dependency name.
     #[arg(long, short)]
     pub ignore_dependency: Vec<String>,
