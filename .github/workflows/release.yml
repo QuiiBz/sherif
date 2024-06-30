@@ -6,6 +6,9 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish-npm-binaries:
     name: Publish NPM binaries
@@ -82,8 +85,6 @@ jobs:
         shell: bash
         run: |
           cd npm
-          # set the binary name
-          bin="sherif"
           # derive the OS and architecture from the build matrix name
           # note: when split by a hyphen, first part is the OS and the second is the architecture
           node_os=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f1)
@@ -95,9 +96,9 @@ jobs:
           # set the package name
           # note: use 'windows' as OS name instead of 'win32'
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
-            export node_pkg="${bin}-windows-${node_arch}"
+            export node_pkg="sherif-windows-${node_arch}"
           else
-            export node_pkg="${bin}-${node_os}-${node_arch}"
+            export node_pkg="sherif-${node_os}-${node_arch}"
           fi
           # create the package directory
           mkdir -p "${node_pkg}/bin"
@@ -106,35 +107,42 @@ jobs:
           # copy the binary into the package
           # note: windows binaries has '.exe' extension
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
-            bin="${bin}.exe"
+            bin="sherif.exe"
           fi
-          cp "../target/${{ matrix.build.TARGET }}/release/${bin}" "${node_pkg}/bin"
+          cp "../target/${{ matrix.build.TARGET }}/release/sherif" "${node_pkg}/bin"
           cp ../README.md "${node_pkg}"
           # publish the package
           cd "${node_pkg}"
-          npm publish --access public
+          # npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  publish-npm-base:
-    name: Publish NPM package
-    needs: publish-npm-binaries
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install node
-        uses: actions/setup-node@v4
+      - name: Store artifacts
+        uses: softprops/action-gh-release@v2
         with:
-          node-version: 20
-          registry-url: "https://registry.npmjs.org"
+          draft: true
+          files: target/${{ matrix.build.TARGET }}/release/sherif
+          tag_name: test
 
-      - name: Publish the package
-        shell: bash
-        run: |
-          cd npm/app
-          cp ../../README.md .
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  # publish-npm-base:
+  #   name: Publish NPM package
+  #   needs: publish-npm-binaries
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Install node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         registry-url: "https://registry.npmjs.org"
+  #
+  #     - name: Publish the package
+  #       shell: bash
+  #       run: |
+  #         cd npm/app
+  #         cp ../../README.md .
+  #         npm publish --access public
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
