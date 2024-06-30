@@ -121,7 +121,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: target/${{ matrix.build.TARGET }}/release/sherif"
+          files: target/${{ matrix.build.TARGET }}/release/sherif
           tag_name: test
 
   # publish-npm-base:
