@@ -117,12 +117,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Store artifacts
-        uses: softprops/action-gh-release@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
           draft: true
-          files: target/${{ matrix.build.TARGET }}/release/sherif
-          tag_name: test
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: target/${{ matrix.build.TARGET }}/release/sherif
+          asset_name: sherif-${{ matrix.build.TARGET }}
 
   # publish-npm-base:
   #   name: Publish NPM package
