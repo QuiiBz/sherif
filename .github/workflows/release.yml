@@ -135,6 +135,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: target/${{ matrix.build.TARGET }}/release/sherif
           asset_name: sherif-${{ matrix.build.TARGET }}
+          asset_content_type: application/octet-stream
 
   # publish-npm-base:
   #   name: Publish NPM package
