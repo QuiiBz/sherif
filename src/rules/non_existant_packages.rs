@@ -128,7 +128,8 @@ impl Issue for NonExistantPackagesIssue {
                 false => {
                     let path = PathBuf::from("package.json");
                     let value = fs::read_to_string(&path)?;
-                    let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
+                    let (mut value, indent, lineending) =
+                        json::deserialize::<serde_json::Value>(&value)?;
 
                     value
                         .get_mut("workspaces")
@@ -141,7 +142,7 @@ impl Issue for NonExistantPackagesIssue {
                             !self.paths.contains(&package)
                         });
 
-                    let value = json::serialize(&value, &indent)?;
+                    let value = json::serialize(&value, indent, lineending)?;
                     fs::write(path, value)?;
 
                     self.fixed = true;

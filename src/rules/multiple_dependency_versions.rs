@@ -146,7 +146,8 @@ impl Issue for MultipleDependencyVersionsIssue {
             for package in self.versions.keys() {
                 let path = PathBuf::from(package).join("package.json");
                 let value = fs::read_to_string(&path)?;
-                let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
+                let (mut value, indent, lineending) =
+                    json::deserialize::<serde_json::Value>(&value)?;
 
                 if let Some(dependencies) = value.get_mut("dependencies") {
                     let dependencies = dependencies.as_object_mut().unwrap();
@@ -164,7 +165,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                     }
                 }
 
-                let value = json::serialize(&value, &indent)?;
+                let value = json::serialize(&value, indent, lineending)?;
                 fs::write(path, value)?;
             }
 
