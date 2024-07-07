@@ -1,7 +1,7 @@
 use std::{fs, process::Command};
 
-use inquire::Select;
 use colored::Colorize;
+use inquire::Select;
 
 
 pub fn run () {
@@ -62,6 +62,10 @@ fn manual_select_package_manager () -> String {
 #[cfg(test)]
 
 mod test {
+    use std::fs;
+    use serde_json::Value;
+    use crate::{args::Args, collect::collect_packages};
+
     #[test]
     fn test_detect_package_manager() {
         use super::*;
@@ -81,4 +85,29 @@ mod test {
         fs::remove_file("pnpm-lock.yaml").unwrap();
         assert_eq!(detect_package_manager(), "");
     }
+    
+    #[test]
+    fn test_install_run() {
+          let args = Args {
+            path: "fixtures/install".into(),
+            fix: false,
+            no_install: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let _ = collect_packages(&args);
+        
+        std::env::set_current_dir("fixtures/install").unwrap();
+        super::run();
+
+        // Test if the previously empty package-lock.json now contains the "install" name to indicate that the install command was run
+        let file = fs::File::open("package-lock.json");
+        let json: Result<Value, serde_json::Error> = serde_json::from_reader(file.unwrap());
+        assert_eq!(json.unwrap()["name"], "install");
+        
+        std::env::set_current_dir("../../").unwrap();
+    }
+    
 }
