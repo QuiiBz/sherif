@@ -30,7 +30,7 @@ impl Issue for PackagesWithoutPackageJsonIssue {
     }
 
     fn message(&self) -> String {
-        format!("   {}/package.json doesn't exists.", self.package)
+        format!("   {}/package.json doesn't exist.", self.package)
     }
 
     fn why(&self) -> Cow<'static, str> {
@@ -74,7 +74,7 @@ mod test {
         assert_eq!(issue.level(), IssueLevel::Warning);
 
         colored::control::set_override(false);
-        assert_eq!(issue.message(), "   test/package.json doesn't exists.");
+        assert_eq!(issue.message(), "   test/package.json doesn't exist.");
         assert_eq!(
             issue.why(),
             "All packages matching the workspace should have a package.json file."
