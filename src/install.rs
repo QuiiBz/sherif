@@ -1,5 +1,5 @@
+use std::process::Stdio;
 use std::{fs, process::Command};
-use std::io::{self, Write};
 
 use colored::Colorize;
 use inquire::Select;
@@ -15,16 +15,17 @@ pub fn run () {
 
     println!("Running install using: {}...", package_manager);
 
-    let output = Command::new(package_manager)
+    let mut command = Command::new(package_manager)
         .arg("install")
-        .output()
-        .expect("Failed to run `install`.");
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .unwrap();
 
-    io::stdout().write_all(&output.stdout).unwrap();
-    io::stderr().write_all(&output.stderr).unwrap();
+    let status = command.wait().unwrap();
 
-    if !output.status.success() {
-        println!("{} Install failed.", "✗".red());
+    if !status.success() {
+        println!("{} Failed to run `install`.", "✗".red());
         std::process::exit(1);
     }
 
