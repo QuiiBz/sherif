@@ -3,11 +3,13 @@ use crate::rules::IssueLevel;
 use crate::{args::Args, printer::print_error};
 use clap::Parser;
 use collect::{collect_issues, collect_packages};
+use colored::Colorize;
 use printer::{print_footer, print_issues};
 use std::time::Instant;
 
 mod args;
 mod collect;
+mod install;
 mod json;
 mod packages;
 mod plural;
@@ -68,5 +70,17 @@ fn main() {
 
     if errors > 0 {
         std::process::exit(1);
+    }
+
+    if args.fix {
+        if args.no_install {
+            println!(
+                "{}",
+                " Don't forget to run `install` to apply the changes.".bright_black()
+            );
+            return;
+        }
+
+        install::run();
     }
 }

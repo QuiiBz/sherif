@@ -1,0 +1,6 @@
+{
+    "name": "install",
+    "workspaces": [
+        "apps/*"
+    ]
+}
