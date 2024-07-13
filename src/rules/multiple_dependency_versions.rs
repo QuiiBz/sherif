@@ -67,7 +67,11 @@ impl Issue for MultipleDependencyVersionsIssue {
             .iter()
             .map(|(package, version)| {
                 let mut common_path = package.split('/').collect::<Vec<_>>();
-                let end = common_path.pop().unwrap();
+                let mut end = common_path.pop().unwrap();
+
+                if end == "." {
+                    end = "./";
+                }
 
                 let formatted_version = format_version(version, &self.versions, false);
                 let version_pad = " ".repeat(if end.len() >= 26 { 3 } else { 26 - end.len() });
@@ -198,6 +202,21 @@ mod test {
             issue.why(),
             "Dependency test has multiple versions defined in the workspace.".to_string()
         );
+    }
+
+    #[test]
+    fn root() {
+        let issue = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            indexmap::indexmap! {
+                "./".into() => SemVersion::parse("5.6.3").unwrap(),
+                "./packages/package-a".into() => SemVersion::parse("1.2.3").unwrap(),
+                "./packages/package-b".into() => SemVersion::parse("3.1.6").unwrap(),
+            },
+        );
+
+        colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
     }
 
     #[test]

@@ -200,6 +200,24 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     );
 
     let mut all_dependencies = IndexMap::new();
+    let mut joined_dependencies = IndexMap::new();
+
+    if let Some(dependencies) = root_package.get_dependencies() {
+        joined_dependencies.extend(dependencies);
+    }
+
+    if let Some(dev_dependencies) = root_package.get_dev_dependencies() {
+        joined_dependencies.extend(dev_dependencies);
+    }
+
+    for (name, version) in joined_dependencies {
+        if version.is_valid() {
+            all_dependencies
+                .entry(name)
+                .or_insert_with(IndexMap::new)
+                .insert(root_package.get_path(), version);
+        }
+    }
 
     for package in packages {
         if package.is_ignored(&args.ignore_package) {
@@ -533,7 +551,7 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
         let issues = collect_issues(&args, packages_list);
-        assert_eq!(issues.total_len(), 2);
+        assert_eq!(issues.total_len(), 3);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
 
@@ -543,6 +561,10 @@ mod test {
         );
         assert_eq!(
             issues.get(&PackageType::None).unwrap()[1].name(),
+            "multiple-dependency-versions"
+        );
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[2].name(),
             "multiple-dependency-versions"
         );
     }
@@ -561,12 +583,16 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "dependencies-star");
 
         let issues = collect_issues(&args, packages_list);
-        assert_eq!(issues.total_len(), 1);
+        assert_eq!(issues.total_len(), 2);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
 
         assert_eq!(
             issues.get(&PackageType::None).unwrap()[0].name(),
+            "multiple-dependency-versions"
+        );
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[1].name(),
             "multiple-dependency-versions"
         );
     }
