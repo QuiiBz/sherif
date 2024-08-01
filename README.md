@@ -82,7 +82,7 @@ sherif -p @repo/tools
 sherif -p "./integrations/*"
 ```
 
-> **Note*13.2.4*
+> **Note**
 > Sherif doesn't have many rules for now, but will likely have more in the future (along with more features).
 
 #### `empty-dependencies` ❌
