@@ -6,6 +6,9 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish-npm-binaries:
     name: Publish NPM binaries
@@ -19,36 +22,42 @@ jobs:
               OS: ubuntu-20.04,
               TOOLCHAIN: stable,
               TARGET: x86_64-unknown-linux-gnu,
+              BIN: sherif
             }
           - {
               NAME: linux-arm64-glibc,
               OS: ubuntu-20.04,
               TOOLCHAIN: stable,
               TARGET: aarch64-unknown-linux-gnu,
+              BIN: sherif
             }
           - {
               NAME: win32-x64-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: x86_64-pc-windows-msvc,
+              BIN: sherif.exe
             }
           - {
               NAME: win32-arm64-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: aarch64-pc-windows-msvc,
+              BIN: sherif.exe
             }
           - {
               NAME: darwin-x64,
               OS: macos-13,
               TOOLCHAIN: stable,
               TARGET: x86_64-apple-darwin,
+              BIN: sherif
             }
           - {
               NAME: darwin-arm64,
               OS: macos-13,
               TOOLCHAIN: stable,
               TARGET: aarch64-apple-darwin,
+              BIN: sherif
             }
     steps:
       - name: Checkout
@@ -82,8 +91,6 @@ jobs:
         shell: bash
         run: |
           cd npm
-          # set the binary name
-          bin="sherif"
           # derive the OS and architecture from the build matrix name
           # note: when split by a hyphen, first part is the OS and the second is the architecture
           node_os=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f1)
@@ -95,26 +102,27 @@ jobs:
           # set the package name
           # note: use 'windows' as OS name instead of 'win32'
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
-            export node_pkg="${bin}-windows-${node_arch}"
+            export node_pkg="sherif-windows-${node_arch}"
           else
-            export node_pkg="${bin}-${node_os}-${node_arch}"
+            export node_pkg="sherif-${node_os}-${node_arch}"
           fi
           # create the package directory
           mkdir -p "${node_pkg}/bin"
           # generate package.json from the template
           envsubst < package.json.tmpl > "${node_pkg}/package.json"
-          # copy the binary into the package
-          # note: windows binaries has '.exe' extension
-          if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
-            bin="${bin}.exe"
-          fi
-          cp "../target/${{ matrix.build.TARGET }}/release/${bin}" "${node_pkg}/bin"
+          cp "../target/${{ matrix.build.TARGET }}/release/${{ matrix.build.BIN }}" "${node_pkg}/bin"
           cp ../README.md "${node_pkg}"
           # publish the package
           cd "${node_pkg}"
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sherif-${{ matrix.build.TARGET }}
+          path: target/${{ matrix.build.TARGET }}/release/${{ matrix.build.BIN }}
 
   publish-npm-base:
     name: Publish NPM package
