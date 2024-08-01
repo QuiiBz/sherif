@@ -266,24 +266,31 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
     }
 
-    for (name, mut versions) in all_dependencies {
-        if versions.len() > 1
-            && !versions
+    for (name, versions) in all_dependencies {
+        let mut filtered_versions = versions
+            .iter()
+            .filter(|(_, version)| {
+                !args
+                    .ignore_dependency
+                    .contains(&format!("{}@{}", name, version))
+            })
+            .map(|(path, version)| (path.clone(), version.clone()))
+            .collect::<IndexMap<_, _>>();
+
+        if filtered_versions.len() > 1
+            && !filtered_versions
                 .values()
                 .collect::<Vec<_>>()
                 .windows(2)
                 .all(|window| window[0] == window[1])
+            && !args.ignore_dependency.contains(&name)
         {
-            let ignored = args.ignore_dependency.contains(&name);
+            filtered_versions.sort_keys();
 
-            if !ignored {
-                versions.sort_keys();
-
-                issues.add_raw(
-                    PackageType::None,
-                    MultipleDependencyVersionsIssue::new(name, versions),
-                );
-            }
+            issues.add_raw(
+                PackageType::None,
+                MultipleDependencyVersionsIssue::new(name, filtered_versions),
+            );
         }
     }
 
@@ -565,6 +572,34 @@ mod test {
         );
         assert_eq!(
             issues.get(&PackageType::None).unwrap()[2].name(),
+            "multiple-dependency-versions"
+        );
+    }
+
+    #[test]
+    fn collect_dependencies_allow() {
+        let args = Args {
+            path: "fixtures/dependencies".into(),
+            fix: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: vec!["next@4.5.6".to_string()],
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "dependencies");
+
+        let issues = collect_issues(&args, packages_list);
+        assert_eq!(issues.total_len(), 2);
+
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[0].name(),
+            "multiple-dependency-versions"
+        );
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[1].name(),
             "multiple-dependency-versions"
         );
     }
