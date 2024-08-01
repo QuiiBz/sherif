@@ -11,7 +11,7 @@ pub struct Args {
     #[arg(long)]
     pub fix: bool,
 
-    /// Ignore the `multiple-dependency-versions` rule for the given dependency name.
+    /// Ignore the `multiple-dependency-versions` rule for the given dependency name and/or version.
     #[arg(long, short)]
     pub ignore_dependency: Vec<String>,
 

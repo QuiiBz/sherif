@@ -1,6 +1,6 @@
 [package]
 name = "sherif"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 license = "MIT"
 authors = ["Tom Lienard"]
@@ -21,6 +21,7 @@ anyhow = "1.0.75"
 clap = { version = "4.4.3", features = ["derive"] }
 colored = "2.0.4"
 detect-indent = "0.1.0"
+detect-newline-style = "0.1.2"
 indexmap = { version = "2.0.0", features = ["serde"] }
 inquire = "0.6.2"
 semver = "1.0.18"
