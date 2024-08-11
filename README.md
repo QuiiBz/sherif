@@ -58,7 +58,7 @@ jobs:
 
 ## Autofix
 
-Most issues can be automatically fixed by using the `--fix` flag. Sherif tries to auto-detect your package manager and runs install. Note that autofix is disabled in CI environments (when `$CI` is set):
+Most issues can be automatically fixed by using the `--fix` (or `-f`) flag. Sherif tries to auto-detect your package manager and run its `install` command. Note that autofix is disabled in CI environments (when `$CI` is set):
 
 ```bash
 sherif --fix
