@@ -64,7 +64,7 @@ Most issues can be automatically fixed by using the `--fix` (or `-f`) flag. Sher
 sherif --fix
 ```
 
-## No-install mode
+### No-install mode
 
 When you don't want Sherif to install packages after running autofix, you can use the `--no-install` flag: 
 
