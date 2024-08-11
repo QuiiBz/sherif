@@ -66,7 +66,7 @@ sherif --fix
 
 ### No-install mode
 
-When you don't want Sherif to install packages after running autofix, you can use the `--no-install` flag: 
+If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag: 
 
 ```bash
 sherif --fix --no-install
