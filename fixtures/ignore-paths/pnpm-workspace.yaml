@@ -3,3 +3,5 @@ packages:
   - 'docs'
   - '!packages/abc'
   - '!packages/d*'
+  - '!packages/a/*'
+  - 'packages/a/b/*'

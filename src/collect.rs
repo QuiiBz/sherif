@@ -139,7 +139,9 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                         let mut is_excluded = false;
 
                         for excluded_path in &excluded_paths {
-                            if real_path.starts_with(excluded_path) {
+                            if real_path.starts_with(excluded_path)
+                                && !real_path.replace(excluded_path, "").contains('/')
+                            {
                                 is_excluded = true;
                                 break;
                             }
@@ -480,7 +482,7 @@ mod test {
         } = result.unwrap();
 
         assert_eq!(root_package.get_name(), "ignore-paths");
-        assert_eq!(packages.len(), 2);
+        assert_eq!(packages.len(), 4);
 
         let mut packages = packages
             .into_iter()
@@ -488,8 +490,10 @@ mod test {
             .collect::<Vec<_>>();
         packages.sort();
 
-        assert_eq!(packages[0], "docs");
-        assert_eq!(packages[1], "ghi");
+        assert_eq!(packages[0], "d");
+        assert_eq!(packages[1], "docs");
+        assert_eq!(packages[2], "e");
+        assert_eq!(packages[3], "ghi");
     }
 
     #[test]
