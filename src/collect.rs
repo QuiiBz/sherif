@@ -96,20 +96,18 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
 
                 match directory.read_dir() {
                     Ok(expanded_folders) => {
-                        for expanded_folder in expanded_folders {
-                            if let Ok(expanded_folder) = expanded_folder {
-                                let expanded_folder = expanded_folder.path();
+                        for expanded_folder in expanded_folders.flatten() {
+                            let expanded_folder = expanded_folder.path();
 
-                                if expanded_folder.is_dir() {
-                                    let path =
-                                        expanded_folder.to_string_lossy().to_string().replace(
-                                            &(args.path.to_string_lossy().to_string() + "/"),
-                                            "",
-                                        ) + "/"
-                                            + subdirectory;
+                            if expanded_folder.is_dir() {
+                                let path = expanded_folder
+                                    .to_string_lossy()
+                                    .to_string()
+                                    .replace(&(args.path.to_string_lossy().to_string() + "/"), "")
+                                    + "/"
+                                    + subdirectory;
 
-                                    expanded_packages.push(path);
-                                }
+                                expanded_packages.push(path);
                             }
                         }
                     }
