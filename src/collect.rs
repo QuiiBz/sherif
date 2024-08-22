@@ -88,7 +88,42 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
             })
             .collect::<Vec<_>>();
 
-        for package in &packages {
+        let mut expanded_packages = Vec::new();
+
+        for package in packages {
+            if let Some((directory, subdirectory)) = package.split_once("/**/") {
+                let directory = args.path.join(directory);
+
+                match directory.read_dir() {
+                    Ok(expanded_folders) => {
+                        for expanded_folder in expanded_folders {
+                            if let Ok(expanded_folder) = expanded_folder {
+                                let expanded_folder = expanded_folder.path();
+
+                                if expanded_folder.is_dir() {
+                                    let path =
+                                        expanded_folder.to_string_lossy().to_string().replace(
+                                            &(args.path.to_string_lossy().to_string() + "/"),
+                                            "",
+                                        ) + "/"
+                                            + subdirectory;
+
+                                    expanded_packages.push(path);
+                                }
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        non_existant_paths.push(package.to_string());
+                        continue;
+                    }
+                }
+            } else {
+                expanded_packages.push(package.to_string());
+            }
+        }
+
+        for package in &expanded_packages {
             if package.ends_with('*') {
                 let directory_match = package.trim_end_matches('*');
 
@@ -620,6 +655,37 @@ mod test {
 
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies-star");
+
+        let issues = collect_issues(&args, packages_list);
+        assert_eq!(issues.total_len(), 2);
+
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[0].name(),
+            "multiple-dependency-versions"
+        );
+        assert_eq!(
+            issues.get(&PackageType::None).unwrap()[1].name(),
+            "multiple-dependency-versions"
+        );
+    }
+
+    #[test]
+    fn collect_dependencies_nested_star() {
+        let args = Args {
+            path: "fixtures/dependencies-nested-star".into(),
+            fix: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(
+            packages_list.root_package.get_name(),
+            "dependencies-nested-star"
+        );
 
         let issues = collect_issues(&args, packages_list);
         assert_eq!(issues.total_len(), 2);
