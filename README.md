@@ -129,7 +129,7 @@ Private packages shouldn't have `@types/*` in `dependencies`, since they don't n
 
 #### `unordered-dependencies` ❌
 
-Dependencies should be ordered alphabetically to prevent complex diffs when installing a new dependency.
+Dependencies should be ordered alphabetically to prevent complex diffs when installing a new dependency via a package manager.
 
 ## Credits
 
