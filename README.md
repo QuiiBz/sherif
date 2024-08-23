@@ -127,6 +127,10 @@ The root `package.json` should be private to prevent accidentaly publishing it t
 
 Private packages shouldn't have `@types/*` in `dependencies`, since they don't need it at runtime. Move them to `devDependencies`.
 
+#### `unordered-dependencies` ❌
+
+Dependencies should be ordered alphabetically to prevent complex diffs when installing a new dependency via a package manager.
+
 ## Credits
 
 - [dedubcheck](https://github.com/innovatrics/dedubcheck) that given me the idea for Sherif

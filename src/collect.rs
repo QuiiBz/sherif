@@ -717,4 +717,36 @@ mod test {
         let issues = collect_issues(&args, packages_list);
         assert_eq!(issues.total_len(), 0);
     }
+
+    #[test]
+    fn collect_unordered_dependencies() {
+        let args = Args {
+            path: "fixtures/unordered".into(),
+            fix: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "unordered");
+        assert_eq!(packages_list.packages.len(), 1);
+
+        let issues = collect_issues(&args, packages_list);
+        assert_eq!(issues.total_len(), 2);
+
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues.get(&PackageType::Root).unwrap()[0].name(),
+            "unordered-dependencies"
+        );
+        assert_eq!(
+            issues
+                .get(&PackageType::Package("fixtures/unordered/docs".to_string()))
+                .unwrap()[0]
+                .name(),
+            "unordered-dependencies"
+        );
+    }
 }

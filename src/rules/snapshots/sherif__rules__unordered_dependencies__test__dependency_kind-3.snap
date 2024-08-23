@@ -1,0 +1,9 @@
+---
+source: src/rules/unordered_dependencies.rs
+expression: issue.message()
+---
+  │ {
+  │   "peerDependencies": {
+  ~     ...   ← keys aren't sorted.
+  │   }
+  │ }

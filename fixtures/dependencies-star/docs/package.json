@@ -1,8 +1,8 @@
 {
   "name": "docs",
   "dependencies": {
-    "next": "1.2.3",
     "eslint": "7.8.9",
+    "next": "1.2.3",
     "react": "*"
   }
 }

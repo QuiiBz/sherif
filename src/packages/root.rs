@@ -54,7 +54,7 @@ impl RootPackage {
     pub fn check_dependencies(&self) -> Option<BoxIssue> {
         match self.0.inner.dependencies.is_some() {
             true => Some(RootPackageDependenciesIssue::new()),
-            false => None,
+            false => self.0.check_dependencies(),
         }
     }
 
