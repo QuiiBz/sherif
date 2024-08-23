@@ -3,7 +3,7 @@ source: src/rules/unordered_dependencies.rs
 expression: issue.message()
 ---
   │ {
-  -   "optionalDependencies": {   ← keys aren't sorted.
-  -     ...
-  -   }
+  │   "optionalDependencies": {
+  ~     ...   ← keys aren't sorted.
+  │   }
   │ }

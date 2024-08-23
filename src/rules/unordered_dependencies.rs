@@ -68,15 +68,13 @@ impl Issue for UnorderedDependenciesIssue {
     fn message(&self) -> String {
         format!(
             r#"  │ {{
-  {}   "{}": {{   {}
-  {}     ...
-  {}   }}
+  │   "{}": {{
+  {}     ...   {}
+  │   }}
   │ }}"#,
-            "-".red(),
             self.dependency_kind.to_string().white(),
-            "← keys aren't sorted.".red(),
-            "-".red(),
-            "-".red(),
+            "~".blue(),
+            "← keys aren't sorted.".blue(),
         )
         .bright_black()
         .to_string()
