@@ -97,7 +97,6 @@ impl Package {
                 return Some(EmptyDependenciesIssue::new(dependency_kind));
             }
 
-            // TODO: should be moved to a separate function
             let mut sorted_dependencies = dependencies.clone();
             sorted_dependencies.sort_keys();
 
