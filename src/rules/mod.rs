@@ -11,6 +11,7 @@ pub mod root_package_dependencies;
 pub mod root_package_manager_field;
 pub mod root_package_private_field;
 pub mod types_in_dependencies;
+pub mod unordered_dependencies;
 
 pub const ERROR: &str = "⨯";
 pub const WARNING: &str = "⚠️";

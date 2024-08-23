@@ -1,0 +1,12 @@
+{
+  "name": "unordered",
+  "private": true,
+  "packageManager": "pnpm@7.0.0",
+  "workspaces": [
+    "docs"
+  ],
+  "devDependencies": {
+    "b": "1.0.0",
+    "a": "1.0.0"
+  }
+}

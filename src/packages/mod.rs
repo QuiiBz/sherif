@@ -1,6 +1,7 @@
 use self::semversion::SemVersion;
 use crate::rules::{
     empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
+    unordered_dependencies::UnorderedDependenciesIssue,
     BoxIssue,
 };
 use anyhow::{anyhow, Result};
@@ -94,6 +95,14 @@ impl Package {
         if let Some(dependencies) = deps {
             if dependencies.is_empty() {
                 return Some(EmptyDependenciesIssue::new(dependency_kind));
+            }
+
+            // TODO: should be moved to a separate function
+            let mut sorted_dependencies = dependencies.clone();
+            sorted_dependencies.sort_keys();
+
+            if sorted_dependencies.keys().ne(dependencies.keys()) {
+                return Some(UnorderedDependenciesIssue::new(dependency_kind));
             }
         }
 

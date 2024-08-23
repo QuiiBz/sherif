@@ -1,0 +1,9 @@
+---
+source: src/rules/unordered_dependencies.rs
+expression: issue.message()
+---
+  │ {
+  -   "devDependencies": {   ← keys aren't sorted.
+  -     ...
+  -   }
+  │ }
