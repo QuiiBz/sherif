@@ -1,16 +1,14 @@
+use colored::Colorize;
+use inquire::Select;
 use std::process::Stdio;
 use std::{fs, process::Command};
 
-use colored::Colorize;
-use inquire::Select;
-
-
-pub fn run () {
+pub fn run() {
     let mut package_manager = detect_package_manager();
 
     if package_manager.is_empty() {
         println!("Could not auto-detect package manager.");
-       package_manager = manual_select_package_manager();
+        package_manager = manual_select_package_manager();
     }
 
     println!("Running install using: {}...", package_manager);
@@ -32,25 +30,25 @@ pub fn run () {
     println!("{} Install completed.", "✓".green());
 }
 
-fn detect_package_manager () -> String {
+fn detect_package_manager() -> String {
     if fs::metadata("package-lock.json").is_ok() {
         return "npm".to_string();
-    } 
-    
+    }
+
     if fs::metadata("yarn.lock").is_ok() {
         return "yarn".to_string();
-    } 
-    
+    }
+
     if fs::metadata("pnpm-lock.yaml").is_ok() {
         return "pnpm".to_string();
-    } 
+    }
 
     return "".to_string();
 }
 
-fn manual_select_package_manager () -> String {
-    let package_manager = Select::new("Select a package manager", vec!["npm", "yarn", "pnpm"])
-        .prompt();
+fn manual_select_package_manager() -> String {
+    let package_manager =
+        Select::new("Select a package manager", vec!["npm", "yarn", "pnpm"]).prompt();
 
     match package_manager {
         Ok("npm") => {
@@ -72,9 +70,9 @@ fn manual_select_package_manager () -> String {
 #[cfg(test)]
 
 mod test {
-    use std::fs;
-    use serde_json::Value;
     use crate::{args::Args, collect::collect_packages};
+    use serde_json::Value;
+    use std::fs;
 
     #[test]
     fn test_detect_package_manager() {
@@ -95,10 +93,10 @@ mod test {
         fs::remove_file("pnpm-lock.yaml").unwrap();
         assert_eq!(detect_package_manager(), "");
     }
-    
+
     #[test]
     fn test_install_run() {
-          let args = Args {
+        let args = Args {
             path: "fixtures/install".into(),
             fix: false,
             no_install: false,
@@ -108,7 +106,7 @@ mod test {
         };
 
         let _ = collect_packages(&args);
-        
+
         std::env::set_current_dir("fixtures/install").unwrap();
         super::run();
 
@@ -116,8 +114,7 @@ mod test {
         let file = fs::File::open("package-lock.json");
         let json: Result<Value, serde_json::Error> = serde_json::from_reader(file.unwrap());
         assert_eq!(json.unwrap()["name"], "install");
-        
+
         std::env::set_current_dir("../../").unwrap();
     }
-    
 }
