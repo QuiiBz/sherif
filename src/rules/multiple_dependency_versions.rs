@@ -1,12 +1,9 @@
 use super::{Issue, IssueLevel, PackageType};
-use crate::{json, packages::semversion::SemVersion};
+use crate::{json, packages::semversion::SemVersion, printer::get_render_config};
 use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
-use inquire::{
-    ui::{Color, RenderConfig, StyleSheet, Styled},
-    Select,
-};
+use inquire::Select;
 use std::{borrow::Cow, fs, path::PathBuf};
 
 #[derive(Debug)]
@@ -124,15 +121,8 @@ impl Issue for MultipleDependencyVersionsIssue {
             .collect::<Vec<_>>();
         versions.dedup();
 
-        let mut render_config = RenderConfig::default_colored()
-            .with_prompt_prefix(Styled::new("✓").with_fg(Color::DarkGrey))
-            .with_help_message(StyleSheet::new().with_fg(Color::DarkGrey))
-            .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan))
-            .with_canceled_prompt_indicator(Styled::new("✗").with_fg(Color::LightRed));
-        render_config.answered_prompt_prefix = Styled::new("✓").with_fg(Color::LightGreen);
-
         let select = Select::new(&message, versions)
-            .with_render_config(render_config)
+            .with_render_config(get_render_config())
             .with_help_message("Enter to select, Esc to skip")
             .prompt_skippable()?;
 

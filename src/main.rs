@@ -62,7 +62,10 @@ fn main() {
 
     // Only run the install command if we allow it and we fixed some issues.
     if args.fix && !args.no_install && fixed > 0 {
-        install::run();
+        if let Err(error) = install::install() {
+            print_error("Failed to install packages", error.to_string().as_str());
+            std::process::exit(1);
+        }
     }
 
     if let Err(error) = print_issues(issues) {

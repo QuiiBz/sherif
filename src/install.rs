@@ -1,74 +1,83 @@
+use crate::printer::get_render_config;
+use anyhow::{anyhow, Result};
 use colored::Colorize;
 use inquire::Select;
-use std::process::Stdio;
-use std::{fs, process::Command};
+use std::{fmt::Display, fs, process::Command, process::Stdio};
 
-pub fn run() {
-    let mut package_manager = detect_package_manager();
+const PACKAGE_MANAGERS: [&str; 4] = ["npm", "yarn", "pnpm", "bun"];
 
-    if package_manager.is_empty() {
-        println!("Could not auto-detect package manager.");
-        package_manager = manual_select_package_manager();
+#[derive(Debug, PartialEq)]
+enum PackageManager {
+    Npm,
+    Yarn,
+    Pnpm,
+    Bun,
+}
+
+impl PackageManager {
+    pub fn resolve() -> Result<Self> {
+        if fs::metadata("package-lock.json").is_ok() {
+            return Ok(PackageManager::Npm);
+        } else if fs::metadata("yarn.lock").is_ok() {
+            return Ok(PackageManager::Yarn);
+        } else if fs::metadata("pnpm-lock.yaml").is_ok() {
+            return Ok(PackageManager::Pnpm);
+        } else if fs::metadata("bun.lockb").is_ok() {
+            return Ok(PackageManager::Bun);
+        }
+
+        let package_manager =
+            Select::new("Select a package manager to use", PACKAGE_MANAGERS.to_vec())
+                .with_render_config(get_render_config())
+                .with_help_message("Enter to select")
+                .prompt();
+
+        match package_manager {
+            Ok("npm") => Ok(PackageManager::Npm),
+            Ok("yarn") => Ok(PackageManager::Yarn),
+            Ok("pnpm") => Ok(PackageManager::Pnpm),
+            Ok("bun") => Ok(PackageManager::Bun),
+            _ => Err(anyhow!("No package manager selected")),
+        }
     }
+}
 
-    println!("Running install using: {}...", package_manager);
+impl Display for PackageManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PackageManager::Npm => write!(f, "npm"),
+            PackageManager::Yarn => write!(f, "yarn"),
+            PackageManager::Pnpm => write!(f, "pnpm"),
+            PackageManager::Bun => write!(f, "bun"),
+        }
+    }
+}
 
-    let mut command = Command::new(package_manager)
+pub fn install() -> Result<()> {
+    let package_manager = PackageManager::resolve()?;
+
+    println!(
+        " {}",
+        format!("Note: running install command using {}...", package_manager).bright_black(),
+    );
+    println!();
+
+    let mut command = Command::new(package_manager.to_string())
         .arg("install")
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .spawn()
-        .unwrap();
+        .spawn()?;
 
-    let status = command.wait().unwrap();
-
+    let status = command.wait()?;
     if !status.success() {
-        println!("{} Failed to run `install`.", "✗".red());
-        std::process::exit(1);
+        return Err(anyhow!("Install command failed"));
     }
 
-    println!("{} Install completed.", "✓".green());
-}
-
-fn detect_package_manager() -> String {
-    if fs::metadata("package-lock.json").is_ok() {
-        return "npm".to_string();
-    }
-
-    if fs::metadata("yarn.lock").is_ok() {
-        return "yarn".to_string();
-    }
-
-    if fs::metadata("pnpm-lock.yaml").is_ok() {
-        return "pnpm".to_string();
-    }
-
-    return "".to_string();
-}
-
-fn manual_select_package_manager() -> String {
-    let package_manager =
-        Select::new("Select a package manager", vec!["npm", "yarn", "pnpm"]).prompt();
-
-    match package_manager {
-        Ok("npm") => {
-            return "npm".to_string();
-        }
-        Ok("yarn") => {
-            return "yarn".to_string();
-        }
-        Ok("pnpm") => {
-            return "pnpm".to_string();
-        }
-        _ => {
-            println!("Invalid package manager selected. Exiting...");
-            std::process::exit(1);
-        }
-    }
+    println!();
+    Ok(())
 }
 
 #[cfg(test)]
-
 mod test {
     use crate::{args::Args, collect::collect_packages};
     use serde_json::Value;
@@ -80,18 +89,17 @@ mod test {
         use std::fs;
 
         fs::File::create("package-lock.json").unwrap();
-        assert_eq!(detect_package_manager(), "npm");
+        assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Npm);
 
         fs::remove_file("package-lock.json").unwrap();
         fs::File::create("yarn.lock").unwrap();
-        assert_eq!(detect_package_manager(), "yarn");
+        assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Yarn);
 
         fs::remove_file("yarn.lock").unwrap();
         fs::File::create("pnpm-lock.yaml").unwrap();
-        assert_eq!(detect_package_manager(), "pnpm");
+        assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Pnpm);
 
         fs::remove_file("pnpm-lock.yaml").unwrap();
-        assert_eq!(detect_package_manager(), "");
     }
 
     #[test]
@@ -108,7 +116,7 @@ mod test {
         let _ = collect_packages(&args);
 
         std::env::set_current_dir("fixtures/install").unwrap();
-        super::run();
+        super::install().unwrap();
 
         // Test if the previously empty package-lock.json now contains the "install" name to indicate that the install command was run
         let file = fs::File::open("package-lock.json");
