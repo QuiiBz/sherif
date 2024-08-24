@@ -629,6 +629,7 @@ mod test {
         let args = Args {
             path: "fixtures/dependencies".into(),
             fix: false,
+            no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: vec!["next@4.5.6".to_string()],
@@ -686,6 +687,7 @@ mod test {
         let args = Args {
             path: "fixtures/dependencies-nested-star".into(),
             fix: false,
+            no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -736,6 +738,7 @@ mod test {
         let args = Args {
             path: "fixtures/unordered".into(),
             fix: false,
+            no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
