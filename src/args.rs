@@ -11,7 +11,7 @@ pub struct Args {
     #[arg(long, short)]
     pub fix: bool,
 
-    /// Don't run the package manager install command.
+    /// Don't run your package manager's install command when autofixing.
     #[arg(long)]
     pub no_install: bool,
 

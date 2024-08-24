@@ -3,7 +3,6 @@ use crate::rules::IssueLevel;
 use crate::{args::Args, printer::print_error};
 use clap::Parser;
 use collect::{collect_issues, collect_packages};
-use colored::Colorize;
 use printer::{print_footer, print_issues};
 use std::time::Instant;
 
@@ -61,6 +60,11 @@ fn main() {
     let errors = issues.len_by_level(IssueLevel::Error);
     let fixed = issues.len_by_level(IssueLevel::Fixed);
 
+    // Only run the install command if we allow it and we fixed some issues.
+    if args.fix && !args.no_install && fixed > 0 {
+        install::run();
+    }
+
     if let Err(error) = print_issues(issues) {
         print_error("Failed to print issues", error.to_string().as_str());
         std::process::exit(1);
@@ -70,17 +74,5 @@ fn main() {
 
     if errors > 0 {
         std::process::exit(1);
-    }
-
-    if args.fix {
-        if args.no_install {
-            println!(
-                "{}",
-                " Don't forget to run `install` to apply the changes.".bright_black()
-            );
-            return;
-        }
-
-        install::run();
     }
 }
