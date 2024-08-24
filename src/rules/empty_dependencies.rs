@@ -72,7 +72,7 @@ impl Issue for EmptyDependenciesIssue {
         if let PackageType::Package(path) = package_type {
             let path = PathBuf::from(path).join("package.json");
             let value = fs::read_to_string(&path)?;
-            let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
+            let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
             let dependency = self.dependency_kind.to_string();
 
             if let Some(dependency_field) = value.get(&dependency) {
@@ -80,7 +80,7 @@ impl Issue for EmptyDependenciesIssue {
                 {
                     value.as_object_mut().unwrap().remove(&dependency);
 
-                    let value = json::serialize(&value, &indent)?;
+                    let value = json::serialize(&value, indent, lineending)?;
                     fs::write(path, value)?;
 
                     self.fixed = true;

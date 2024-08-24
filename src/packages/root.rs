@@ -1,10 +1,11 @@
-use super::{Package, Workspaces};
+use super::{semversion::SemVersion, Package, Workspaces};
 use crate::rules::{
     root_package_dependencies::RootPackageDependenciesIssue,
     root_package_manager_field::RootPackageManagerFieldIssue,
     root_package_private_field::RootPackagePrivateFieldIssue, BoxIssue,
 };
 use anyhow::Result;
+use indexmap::IndexMap;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -20,6 +21,10 @@ impl RootPackage {
     #[cfg(test)]
     pub fn get_name(&self) -> String {
         self.0.get_name().clone().unwrap_or_default()
+    }
+
+    pub fn get_path(&self) -> String {
+        self.0.get_path()
     }
 
     pub fn get_workspaces(&self) -> Option<Vec<String>> {
@@ -49,7 +54,7 @@ impl RootPackage {
     pub fn check_dependencies(&self) -> Option<BoxIssue> {
         match self.0.inner.dependencies.is_some() {
             true => Some(RootPackageDependenciesIssue::new()),
-            false => None,
+            false => self.0.check_dependencies(),
         }
     }
 
@@ -63,5 +68,13 @@ impl RootPackage {
 
     pub fn check_optional_dependencies(&self) -> Option<BoxIssue> {
         self.0.check_optional_dependencies()
+    }
+
+    pub fn get_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
+        self.0.get_dependencies()
+    }
+
+    pub fn get_dev_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
+        self.0.get_dev_dependencies()
     }
 }

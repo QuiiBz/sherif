@@ -64,7 +64,11 @@ impl Issue for MultipleDependencyVersionsIssue {
             .iter()
             .map(|(package, version)| {
                 let mut common_path = package.split('/').collect::<Vec<_>>();
-                let end = common_path.pop().unwrap();
+                let mut end = common_path.pop().unwrap();
+
+                if end == "." {
+                    end = "./";
+                }
 
                 let formatted_version = format_version(version, &self.versions, false);
                 let version_pad = " ".repeat(if end.len() >= 26 { 3 } else { 26 - end.len() });
@@ -110,7 +114,7 @@ impl Issue for MultipleDependencyVersionsIssue {
     }
 
     fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
-        let message = format!("Select the version of {} to use:", self.name).bold();
+        let message = format!("Select the version of {} to use:", self.name.bold());
 
         let mut sorted_versions = self.versions.values().collect::<Vec<_>>();
         sorted_versions.sort_by(|a, b| b.cmp(a));
@@ -136,7 +140,8 @@ impl Issue for MultipleDependencyVersionsIssue {
             for package in self.versions.keys() {
                 let path = PathBuf::from(package).join("package.json");
                 let value = fs::read_to_string(&path)?;
-                let (mut value, indent) = json::deserialize::<serde_json::Value>(&value)?;
+                let (mut value, indent, lineending) =
+                    json::deserialize::<serde_json::Value>(&value)?;
 
                 if let Some(dependencies) = value.get_mut("dependencies") {
                     let dependencies = dependencies.as_object_mut().unwrap();
@@ -154,7 +159,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                     }
                 }
 
-                let value = json::serialize(&value, &indent)?;
+                let value = json::serialize(&value, indent, lineending)?;
                 fs::write(path, value)?;
             }
 
@@ -187,6 +192,21 @@ mod test {
             issue.why(),
             "Dependency test has multiple versions defined in the workspace.".to_string()
         );
+    }
+
+    #[test]
+    fn root() {
+        let issue = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            indexmap::indexmap! {
+                "./".into() => SemVersion::parse("5.6.3").unwrap(),
+                "./packages/package-a".into() => SemVersion::parse("1.2.3").unwrap(),
+                "./packages/package-b".into() => SemVersion::parse("3.1.6").unwrap(),
+            },
+        );
+
+        colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
     }
 
     #[test]

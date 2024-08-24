@@ -51,7 +51,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: npx sherif@0.9.0
+      - run: npx sherif@0.11.0
 ```
 
 </details>
@@ -101,11 +101,14 @@ sherif -p "./integrations/*"
 
 A given dependency should use the same version across the monorepo.
 
-You can ignore this rule for a dependency if you expect to have multiple versions by using `--ignore-dependency <name>` (or `-i <name>`):
+You can ignore this rule for a specific dependency and version or all versions of a dependency if it's expected in your monorepo by using `--ignore-dependency <name@version>` / `--ignore-dependency <name>` (or `-i <name@version>` / `-i <name>`):
 
 ```bash
-# Ignore dependencies that are expected to have multiple versions
-sherif -i react -i @types/node
+# Ignore only the specific dependency version mismatch
+sherif -i react@17.0.2 -i next@13.2.4
+
+# Completely ignore all versions mismatch of these dependencies
+sherif -i react -i next
 ```
 
 #### `non-existant-packages` ⚠️
@@ -131,6 +134,10 @@ The root `package.json` should be private to prevent accidentaly publishing it t
 #### `types-in-dependencies` ❌
 
 Private packages shouldn't have `@types/*` in `dependencies`, since they don't need it at runtime. Move them to `devDependencies`.
+
+#### `unordered-dependencies` ❌
+
+Dependencies should be ordered alphabetically to prevent complex diffs when installing a new dependency via a package manager.
 
 ## Credits
 
