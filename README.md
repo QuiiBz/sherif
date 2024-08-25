@@ -58,10 +58,18 @@ jobs:
 
 ## Autofix
 
-Most issues can be automatically fixed by using the `--fix` flag. Note that autofix is disabled in CI environments (when `$CI` is set):
+Most issues can be automatically fixed by using the `--fix` (or `-f`) flag. Sherif will automatically run your package manager's `install` command (see [No-install mode](#no-install-mode) to disable this behavior) to update the lockfile. Note that autofix is disabled in CI environments (when `$CI` is set):
 
 ```bash
 sherif --fix
+```
+
+### No-install mode
+
+If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag: 
+
+```bash
+sherif --fix --no-install
 ```
 
 ## Rules

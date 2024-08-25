@@ -4,6 +4,7 @@ use crate::{
 };
 use anyhow::Result;
 use colored::Colorize;
+use inquire::ui::{Color, RenderConfig, StyleSheet, Styled};
 use std::io::Write;
 use std::time::Instant;
 
@@ -71,7 +72,17 @@ pub fn print_footer(
     );
     println!(
         "{}",
-        " Note: use `-i` to ignore dependencies, `-r` to ignore rules, `-p` to ignore packages, and `--fix` to autofix fixable issues."
+        " Note: use `-i` to ignore dependencies, `-r` to ignore rules, `-p` to ignore packages, and `-f` to autofix fixable issues."
             .bright_black()
     );
+}
+
+pub fn get_render_config() -> RenderConfig {
+    let mut render_config = RenderConfig::default_colored()
+        .with_prompt_prefix(Styled::new("✓").with_fg(Color::DarkGrey))
+        .with_help_message(StyleSheet::new().with_fg(Color::DarkGrey))
+        .with_highlighted_option_prefix(Styled::new(" → ").with_fg(Color::LightCyan))
+        .with_canceled_prompt_indicator(Styled::new("✗").with_fg(Color::LightRed));
+    render_config.answered_prompt_prefix = Styled::new("✓").with_fg(Color::LightGreen);
+    render_config
 }

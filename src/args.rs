@@ -8,8 +8,12 @@ pub struct Args {
     pub path: PathBuf,
 
     /// Fix the issues automatically, if possible.
-    #[arg(long)]
+    #[arg(long, short)]
     pub fix: bool,
+
+    /// Don't run your package manager's install command when autofixing.
+    #[arg(long)]
+    pub no_install: bool,
 
     /// Ignore the `multiple-dependency-versions` rule for the given dependency name and/or version.
     #[arg(long, short)]

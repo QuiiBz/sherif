@@ -8,6 +8,7 @@ use std::time::Instant;
 
 mod args;
 mod collect;
+mod install;
 mod json;
 mod packages;
 mod plural;
@@ -58,6 +59,14 @@ fn main() {
     let warnings = issues.len_by_level(IssueLevel::Warning);
     let errors = issues.len_by_level(IssueLevel::Error);
     let fixed = issues.len_by_level(IssueLevel::Fixed);
+
+    // Only run the install command if we allow it and we fixed some issues.
+    if args.fix && !args.no_install && fixed > 0 {
+        if let Err(error) = install::install() {
+            print_error("Failed to install packages", error.to_string().as_str());
+            std::process::exit(1);
+        }
+    }
 
     if let Err(error) = print_issues(issues) {
         print_error("Failed to print issues", error.to_string().as_str());
