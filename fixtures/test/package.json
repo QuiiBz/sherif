@@ -1,0 +1,13 @@
+{
+  "name": "dependencies",
+  "workspaces": [
+    "packages/*",
+    "docs"
+  ],
+  "private": true,
+  "packageManager": "pnpm@1.2.3",
+  "devDependencies": {
+    "svelte": "^5.0.0-next.242",
+    "test": "^1.0.1"
+  }
+}

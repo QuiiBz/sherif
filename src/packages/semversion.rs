@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use semver::{Version, VersionReq};
+use semver::{Prerelease, Version, VersionReq};
 use std::{cmp::Ordering, fmt::Display};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -60,6 +60,16 @@ impl SemVersion {
         }
     }
 
+    pub fn prerelease(&self) -> Prerelease {
+        match self {
+            Self::Exact(version) => version.pre.clone(),
+            Self::Range(version) => version
+                .comparators
+                .first()
+                .map_or(Prerelease::EMPTY, |comparator| comparator.pre.clone()),
+        }
+    }
+
     pub fn cmp(&self, other: &Self) -> Ordering {
         let mut ordering = self.patch().cmp(&other.patch());
 
@@ -68,7 +78,12 @@ impl SemVersion {
             new_ordering => new_ordering,
         };
 
-        match self.major().cmp(&other.major()) {
+        ordering = match self.major().cmp(&other.major()) {
+            Ordering::Equal => ordering,
+            new_ordering => new_ordering,
+        };
+
+        match self.prerelease().cmp(&other.prerelease()) {
             Ordering::Equal => ordering,
             new_ordering => new_ordering,
         }

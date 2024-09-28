@@ -1,0 +1,7 @@
+{
+  "name": "abc",
+  "dependencies": {
+    "svelte": "^5.0.0-next.242",
+    "test": "^1.0.0"
+  }
+}
