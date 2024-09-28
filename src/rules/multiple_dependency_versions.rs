@@ -15,7 +15,7 @@ pub struct MultipleDependencyVersionsIssue {
 
 impl MultipleDependencyVersionsIssue {
     pub fn new(name: String, mut versions: IndexMap<String, SemVersion>) -> Box<Self> {
-        versions.sort_by(|_, a, _, b| a.cmp(b));
+        versions.sort_by(|_, a, _, b| b.cmp(a));
 
         Box::new(Self {
             name,
@@ -30,9 +30,9 @@ fn format_version(
     versions: &IndexMap<String, SemVersion>,
     skip_version_color: bool,
 ) -> String {
-    let (version, indicator) = if version == versions.last().unwrap().1 {
+    let (version, indicator) = if version == versions.first().unwrap().1 {
         (version.to_string().green(), "↑ highest".green())
-    } else if version == versions.first().unwrap().1 {
+    } else if version == versions.last().unwrap().1 {
         (version.to_string().red(), "↓ lowest".red())
     } else {
         (version.to_string().yellow(), "∼ between".yellow())
@@ -230,6 +230,21 @@ mod test {
                 "./apps/package-a".into() => SemVersion::parse("5.6.3").unwrap(),
                 "./apps/package-b".into() => SemVersion::parse("1.2.3").unwrap(),
                 "./packages/package-c".into() => SemVersion::parse("3.1.6").unwrap(),
+            },
+        );
+
+        colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
+    }
+
+    #[test]
+    fn order_prerelease() {
+        let issue = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            indexmap::indexmap! {
+                "./apps/package-a".into() => SemVersion::parse("5.0.0-next.4").unwrap(),
+                "./apps/package-b".into() => SemVersion::parse("5.0.0-next.3").unwrap(),
+                "./packages/package-c".into() => SemVersion::parse("5.0.0-next.6").unwrap(),
             },
         );
 
