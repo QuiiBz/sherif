@@ -18,12 +18,12 @@ impl PackageManager {
     pub fn resolve() -> Result<Self> {
         if fs::metadata("package-lock.json").is_ok() {
             return Ok(PackageManager::Npm);
+        } else if fs::metadata("bun.lockb").is_ok() {
+            return Ok(PackageManager::Bun);
         } else if fs::metadata("yarn.lock").is_ok() {
             return Ok(PackageManager::Yarn);
         } else if fs::metadata("pnpm-lock.yaml").is_ok() {
             return Ok(PackageManager::Pnpm);
-        } else if fs::metadata("bun.lockb").is_ok() {
-            return Ok(PackageManager::Bun);
         }
 
         let package_manager =
