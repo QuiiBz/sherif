@@ -24,7 +24,7 @@ impl PackageManager {
             return Ok(PackageManager::Yarn);
         } else if fs::metadata("pnpm-lock.yaml").is_ok() {
             return Ok(PackageManager::Pnpm);
-        } 
+        }
 
         let package_manager =
             Select::new("Select a package manager to use", PACKAGE_MANAGERS.to_vec())
