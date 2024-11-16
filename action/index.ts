@@ -83,6 +83,13 @@ async function run(): Promise<void> {
       await fsp.chmod(binaryPath, '777');
     }
 
+    // Add to PATH
+    core.addPath(extractedPath);
+
+    // Set output
+    core.setOutput('sherif-path', binaryPath);
+    core.info('Sherif has been installed successfully');
+
     // Prepare arguments
     const args = additionalArgs.split(' ').filter(arg => arg !== '');
 
@@ -96,7 +103,7 @@ async function run(): Promise<void> {
     };
 
     // Execute Sherif
-    const exitCode = await exec.exec(downloadPath, args, options);
+    const exitCode = await exec.exec(binaryPath, args, options);
 
     // Handle exit code
     if (exitCode !== 0) {
