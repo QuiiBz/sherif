@@ -96,10 +96,7 @@ mod test {
         assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Yarn);
 
         fs::remove_file("yarn.lock").unwrap();
-        fs::File::create("pnpm-lock.yaml").unwrap();
         assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Pnpm);
-
-        fs::remove_file("pnpm-lock.yaml").unwrap();
     }
 
     #[test]
