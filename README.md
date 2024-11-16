@@ -38,7 +38,7 @@ We recommend running Sherif in your CI once [all errors are fixed](#autofix). Ru
 <summary>GitHub Actions example</summary>
 
 ```yaml
-# Using the `actions/sherif` action
+# Using the `QuiiBz/sherif` action
 name: Sherif
 on:
   pull_request:
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/sherif@v1
+      - uses: QuiiBz/sherif@v1
         # Optionally, you can specify a version and arguments to run Sherif with:
         # with:
           # version: '1.0.1'
