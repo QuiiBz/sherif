@@ -18,7 +18,7 @@
   "homepage": "https://github.com/QuiiBz/sherif#readme",
   "license": "MIT",
   "scripts": {
-    "action": "ncc build action/index.ts -o dist"
+    "action": "ncc build action/index.ts -o action"
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
