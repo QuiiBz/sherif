@@ -32649,6 +32649,11 @@ function run() {
             if (platform !== 'win32') {
                 yield fsp.chmod(binaryPath, '777');
             }
+            // Add to PATH
+            core.addPath(extractedPath);
+            // Set output
+            core.setOutput('sherif-path', binaryPath);
+            core.info('Sherif has been installed successfully');
             // Prepare arguments
             const args = additionalArgs.split(' ').filter(arg => arg !== '');
             // Configure output options to preserve colors
@@ -32658,7 +32663,7 @@ function run() {
                  })
             };
             // Execute Sherif
-            const exitCode = yield exec.exec(downloadPath, args, options);
+            const exitCode = yield exec.exec(binaryPath, args, options);
             // Handle exit code
             if (exitCode !== 0) {
                 throw new Error(`Sherif execution failed with exit code ${exitCode}`);

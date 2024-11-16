@@ -51,7 +51,7 @@ jobs:
       - uses: QuiiBz/sherif@v1
         # Optionally, you can specify a version and arguments to run Sherif with:
         # with:
-          # version: '1.0.1'
+          # version: 'v1.0.1'
           # args: '--ignore-rule root-package-manager-field'
 
 # Using `npx` to run Sherif
