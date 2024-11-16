@@ -38,6 +38,7 @@ We recommend running Sherif in your CI once [all errors are fixed](#autofix). Ru
 <summary>GitHub Actions example</summary>
 
 ```yaml
+# Using the `actions/sherif` action
 name: Sherif
 on:
   pull_request:
@@ -46,8 +47,23 @@ jobs:
     name: Run Sherif
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/sherif@v1
+        # Optionally, you can specify a version and arguments to run Sherif with:
+        # with:
+          # version: '1.0.1'
+          # args: '--ignore-rule root-package-manager-field'
+
+# Using `npx` to run Sherif
+name: Sherif
+on:
+  pull_request:
+jobs:
+  check:
+    name: Run Sherif
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version: 20
