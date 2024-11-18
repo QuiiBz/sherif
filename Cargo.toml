@@ -1,6 +1,6 @@
 [package]
 name = "sherif"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 license = "MIT"
 authors = ["Tom Lienard"]
