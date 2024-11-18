@@ -57,6 +57,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                     ));
                 } else {
                     print_error("Failed to collect package", &error.to_string());
+                    std::process::exit(1);
                 }
             }
         };
