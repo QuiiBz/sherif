@@ -6,10 +6,14 @@ use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::non_existant_packages::NonExistantPackagesIssue;
 use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
 use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
+use crate::rules::unsync_similar_dependencies::{
+    SimilarDependency, UnsyncSimilarDependenciesIssue,
+};
 use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::fs::{self};
 use std::path::PathBuf;
 
@@ -301,7 +305,18 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
     }
 
+    let mut similar_dependencies = IndexMap::new();
+
     for (name, versions) in all_dependencies {
+        if let Ok(similar_dependency) = SimilarDependency::try_from(name.as_str()) {
+            similar_dependencies
+                .entry(similar_dependency)
+                .or_insert_with(IndexMap::new)
+                .entry(name.clone())
+                .or_insert_with(Vec::new)
+                .extend(versions.clone());
+        }
+
         let mut filtered_versions = versions
             .iter()
             .filter(|(_, version)| {
@@ -326,6 +341,22 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                 PackageType::None,
                 MultipleDependencyVersionsIssue::new(name, filtered_versions),
             );
+        }
+    }
+
+    for (similar_dependency, versions) in similar_dependencies {
+        if versions.len() > 1 {
+            let mut unique_versions = HashSet::new();
+            for (_, version) in versions.iter().flat_map(|(_, versions)| versions) {
+                unique_versions.insert(version);
+            }
+
+            if unique_versions.len() > 1 {
+                issues.add_raw(
+                    PackageType::None,
+                    UnsyncSimilarDependenciesIssue::new(similar_dependency, versions),
+                );
+            }
         }
     }
 
