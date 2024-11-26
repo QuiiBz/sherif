@@ -33,6 +33,8 @@ npx sherif@latest
 
 We recommend running Sherif in your CI once [all errors are fixed](#autofix). Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
 
+By default, it will search for a `sherif` script in the root `package.json` and try to use the same arguments, so you can avoid repeating yourself. But you can override this behaviour with the `args` param.
+
 <details>
 
 <summary>GitHub Actions example</summary>
@@ -82,7 +84,7 @@ sherif --fix
 
 ### No-install mode
 
-If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag: 
+If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag:
 
 ```bash
 sherif --fix --no-install
@@ -168,4 +170,3 @@ Dependencies should be ordered alphabetically to prevent complex diffs when inst
 ## License
 
 [MIT](./LICENSE)
-

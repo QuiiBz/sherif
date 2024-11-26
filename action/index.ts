@@ -11,7 +11,7 @@ async function run(): Promise<void> {
     // Get inputs
     const version = core.getInput('version');
     const token = core.getInput('github-token');
-    const additionalArgs = core.getInput('args');
+    let additionalArgs = core.getInput('args');
 
     // Initialize octokit
     const octokit = github.getOctokit(token);
@@ -91,6 +91,9 @@ async function run(): Promise<void> {
     core.info('Sherif has been installed successfully');
 
     // Prepare arguments
+    if (!additionalArgs) {
+      additionalArgs = (await getArgsFromPackageJson()) || '';
+    }
     const args = additionalArgs.split(' ').filter(arg => arg !== '');
 
     // Configure output options to preserve colors
@@ -116,6 +119,37 @@ async function run(): Promise<void> {
     } else {
       core.setFailed('An unexpected error occurred');
     }
+  }
+}
+
+async function getArgsFromPackageJson() {
+  try {
+    const packageJsonFile = await fsp.readFile(
+      path.resolve(process.cwd(), 'package.json')
+    );
+    const packageJson = JSON.parse(packageJsonFile.toString());
+
+    if (!('scripts' in packageJson)) {
+      core.info('No scripts found in package.json');
+      return;
+    }
+
+    if (!('sherif' in packageJson.scripts)) {
+      core.info('No sherif script found in package.json');
+      return;
+    }
+
+    // Select the args of the sherif script
+    const regexResult = /sherif\s([a-zA-Z\s\.-]*)(?=\s&&|$)/g.exec(
+      packageJson.scripts.sherif
+    );
+    if (regexResult && regexResult.length > 1) {
+      const args = regexResult[1];
+      core.info(`Found args "${args}" package.json`);
+      return args;
+    }
+  } catch {
+    core.info('Failed to extract args from package.json');
   }
 }
 
