@@ -129,23 +129,14 @@ async function getArgsFromPackageJson() {
     );
     const packageJson = JSON.parse(packageJsonFile.toString());
 
-    if (!('scripts' in packageJson)) {
-      core.info('No scripts found in package.json');
-      return;
-    }
-
-    if (!('sherif' in packageJson.scripts)) {
-      core.info('No sherif script found in package.json');
-      return;
-    }
-
-    // Select the args of the sherif script
+    // Extract args from the `sherif` script in package.json, starting after
+    // `sherif ` and ending before the next `&&` or end of line
     const regexResult = /sherif\s([a-zA-Z\s\.-]*)(?=\s&&|$)/g.exec(
       packageJson.scripts.sherif
     );
     if (regexResult && regexResult.length > 1) {
       const args = regexResult[1];
-      core.info(`Found args "${args}" package.json`);
+      core.info(`Using the arguments "${args}" from the root package.json`);
       return args;
     }
   } catch {

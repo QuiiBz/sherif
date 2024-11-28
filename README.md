@@ -33,7 +33,7 @@ npx sherif@latest
 
 We recommend running Sherif in your CI once [all errors are fixed](#autofix). Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
 
-By default, it will search for a `sherif` script in the root `package.json` and try to use the same arguments, so you can avoid repeating yourself. But you can override this behaviour with the `args` param.
+When using the GitHub Action, it will search for a `sherif` script in the root `package.json` and use the same arguments automatically to avoid repeating them twice. You can override this behaviour with the `args` parameter.
 
 <details>
 
