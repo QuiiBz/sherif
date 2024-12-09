@@ -123,6 +123,9 @@ You can ignore this rule for a specific dependency and version or all versions o
 # Ignore only the specific dependency version mismatch
 sherif -i react@17.0.2 -i next@13.2.4
 
+# Ignore all versions mismatch of dependencies that starts with @next/
+sherif -i @next/*
+
 # Completely ignore all versions mismatch of these dependencies
 sherif -i react -i next
 ```
@@ -168,4 +171,3 @@ Dependencies should be ordered alphabetically to prevent complex diffs when inst
 ## License
 
 [MIT](./LICENSE)
-

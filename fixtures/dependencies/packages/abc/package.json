@@ -1,6 +1,7 @@
 {
   "name": "abc",
   "dependencies": {
+    "@eslint/js": "9.8.7",
     "next": "4.5.6",
     "react": "1.2.3"
   }
