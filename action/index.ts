@@ -131,7 +131,7 @@ async function getArgsFromPackageJson() {
 
     // Extract args from the `sherif` script in package.json, starting after
     // `sherif ` and ending before the next `&&` or end of line
-    const regexResult = /sherif\s([a-zA-Z\s\.-]*)(?=\s&&|$)/g.exec(
+    const regexResult = /sherif\s([^&&]*)/g.exec(
       packageJson.scripts.sherif
     );
     if (regexResult && regexResult.length > 1) {

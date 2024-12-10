@@ -32689,7 +32689,7 @@ function getArgsFromPackageJson() {
             const packageJson = JSON.parse(packageJsonFile.toString());
             // Extract args from the `sherif` script in package.json, starting after
             // `sherif ` and ending before the next `&&` or end of line
-            const regexResult = /sherif\s([a-zA-Z\s\.-]*)(?=\s&&|$)/g.exec(packageJson.scripts.sherif);
+            const regexResult = /sherif\s([^&&]*)/g.exec(packageJson.scripts.sherif);
             if (regexResult && regexResult.length > 1) {
                 const args = regexResult[1];
                 core.info(`Using the arguments "${args}" from the root package.json`);
