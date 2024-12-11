@@ -3,7 +3,7 @@ description: 'Setup and run Sherif, an opinionated, zero-config linter for JavaS
 
 inputs:
   version:
-    description: 'The Sherif version to use (e.g., v1.1.0)'
+    description: 'The Sherif version to use (e.g., v1.1.1)'
     required: false
     default: 'latest'
   github-token:
