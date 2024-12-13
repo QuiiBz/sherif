@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use semver::{Prerelease, Version, VersionReq};
 use std::{cmp::Ordering, fmt::Display};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum SemVersion {
     Exact(Version),
     Range(VersionReq),
