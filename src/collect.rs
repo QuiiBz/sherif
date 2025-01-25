@@ -1,5 +1,6 @@
 use crate::args::Args;
 use crate::packages::root::RootPackage;
+use crate::packages::semversion::SemVersion;
 use crate::packages::{Package, PackagesList};
 use crate::printer::print_error;
 use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
@@ -13,7 +14,6 @@ use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::fs::{self};
 use std::path::PathBuf;
 
@@ -241,6 +241,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
 
     let mut all_dependencies = IndexMap::new();
     let mut joined_dependencies = IndexMap::new();
+    let mut similar_dependencies_by_package = IndexMap::new();
 
     if let Some(dependencies) = root_package.get_dependencies() {
         joined_dependencies.extend(dependencies);
@@ -306,16 +307,26 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
     }
 
-    let mut similar_dependencies = IndexMap::new();
-
     for (name, versions) in all_dependencies {
         if let Ok(similar_dependency) = SimilarDependency::try_from(name.as_str()) {
-            similar_dependencies
-                .entry(similar_dependency)
-                .or_insert_with(IndexMap::new)
-                .entry(name.clone())
-                .or_insert_with(Vec::new)
-                .extend(versions.clone());
+            for (path, version) in versions.iter() {
+                let map = similar_dependencies_by_package
+                    .entry(path.clone())
+                    .or_insert_with(
+                        IndexMap::<SimilarDependency, IndexMap<SemVersion, String>>::new,
+                    );
+
+                if map.contains_key(&similar_dependency) {
+                    map.get_mut(&similar_dependency)
+                        .unwrap()
+                        .insert(version.clone(), name.clone());
+                } else {
+                    map.insert(
+                        similar_dependency.clone(),
+                        [(version.clone(), name.clone())].iter().cloned().collect(),
+                    );
+                }
+            }
         }
 
         let mut filtered_versions = versions
@@ -345,16 +356,11 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         }
     }
 
-    for (similar_dependency, versions) in similar_dependencies {
-        if versions.len() > 1 {
-            let mut unique_versions = HashSet::new();
-            for (_, version) in versions.iter().flat_map(|(_, versions)| versions) {
-                unique_versions.insert(version);
-            }
-
-            if unique_versions.len() > 1 {
+    for (path, similar_dependencies) in similar_dependencies_by_package {
+        for (similar_dependency, versions) in similar_dependencies {
+            if versions.len() > 1 {
                 issues.add_raw(
-                    PackageType::None,
+                    PackageType::Package(path.clone()),
                     UnsyncSimilarDependenciesIssue::new(similar_dependency, versions),
                 );
             }

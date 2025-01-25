@@ -2,19 +2,23 @@ use super::Issue;
 use crate::packages::semversion::SemVersion;
 use colored::Colorize;
 use indexmap::IndexMap;
-use std::{borrow::Cow, fmt::Display};
+use std::{borrow::Cow, fmt::Display, hash::Hash};
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum SimilarDependency {
+    React,
     NextJS,
     Turborepo,
+    TanstackQuery,
 }
 
 impl Display for SimilarDependency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::React => write!(f, "React"),
             Self::NextJS => write!(f, "Next.js"),
             Self::Turborepo => write!(f, "Turborepo"),
+            Self::TanstackQuery => write!(f, "Tanstack Query"),
         }
     }
 }
@@ -24,20 +28,40 @@ impl TryFrom<&str> for SimilarDependency {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            // Next.js
-            "next" => Ok(Self::NextJS),
-            "@next/eslint-plugin-next" => Ok(Self::NextJS),
-            "eslint-config-next" => Ok(Self::NextJS),
-            "@next/bundle-analyzer" => Ok(Self::NextJS),
-            "@next/third-parties" => Ok(Self::NextJS),
-            "@next/mdx" => Ok(Self::NextJS),
-            // Turborepo
-            "turbo" => Ok(Self::Turborepo),
-            "turbo-ignore" => Ok(Self::Turborepo),
-            "eslint-config-turbo" => Ok(Self::Turborepo),
-            "eslint-plugin-turbo" => Ok(Self::Turborepo),
-            "@turbo/gen" => Ok(Self::Turborepo),
-            "@turbo/workspaces" => Ok(Self::Turborepo),
+            "react" | "react-dom" => Ok(Self::React),
+            "next"
+            | "@next/eslint-plugin-next"
+            | "eslint-config-next"
+            | "@next/bundle-analyzer"
+            | "@next/third-parties"
+            | "@next/mdx" => Ok(Self::NextJS),
+            "turbo"
+            | "turbo-ignore"
+            | "eslint-config-turbo"
+            | "eslint-plugin-turbo"
+            | "@turbo/gen"
+            | "@turbo/workspaces" => Ok(Self::Turborepo),
+            "@tanstack/eslint-plugin-query"
+            | "@tanstack/query-async-storage-persister"
+            | "@tanstack/query-broadcast-client-experimental"
+            | "@tanstack/query-core"
+            | "@tanstack/query-devtools"
+            | "@tanstack/query-persist-client-core"
+            | "@tanstack/query-sync-storage-persister"
+            | "@tanstack/react-query"
+            | "@tanstack/react-query-devtools"
+            | "@tanstack/react-query-persist-client"
+            | "@tanstack/react-query-next-experimental"
+            | "@tanstack/solid-query"
+            | "@tanstack/solid-query-devtools"
+            | "@tanstack/solid-query-persist-client"
+            | "@tanstack/svelte-query"
+            | "@tanstack/svelte-query-devtools"
+            | "@tanstack/svelte-query-persist-client"
+            | "@tanstack/vue-query"
+            | "@tanstack/vue-query-devtools"
+            | "@tanstack/angular-query-devtools-experimental"
+            | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
@@ -46,15 +70,12 @@ impl TryFrom<&str> for SimilarDependency {
 #[derive(Debug)]
 pub struct UnsyncSimilarDependenciesIssue {
     r#type: SimilarDependency,
-    versions: IndexMap<String, Vec<(String, SemVersion)>>,
+    versions: IndexMap<SemVersion, String>,
     fixed: bool,
 }
 
 impl UnsyncSimilarDependenciesIssue {
-    pub fn new(
-        r#type: SimilarDependency,
-        versions: IndexMap<String, Vec<(String, SemVersion)>>,
-    ) -> Box<Self> {
+    pub fn new(r#type: SimilarDependency, versions: IndexMap<SemVersion, String>) -> Box<Self> {
         Box::new(Self {
             r#type,
             versions,
@@ -76,52 +97,76 @@ impl Issue for UnsyncSimilarDependenciesIssue {
     }
 
     fn message(&self) -> String {
-        self.versions
+        let deps = self
+            .versions
             .iter()
-            .map(|(dependency, versions)| {
-                // let version_pad = " ".repeat(if dependency.len() >= 26 {
-                //     3
-                // } else {
-                //     26 - dependency.len()
-                // });
-                //
-                // format!(
-                //     "  {}{}{}",
-                //     dependency.bright_black(),
-                //     version_pad,
-                //     versions.get(0).unwrap().1
-                // )
-
-                versions
-                    .iter()
-                    .map(|(package, version)| {
-                        let location = format!(
-                            "{} {}",
-                            dependency.white(),
-                            format!("in {}", package).bright_black()
-                        );
-                        let len = format!("{} in {}", dependency, package).len();
-                        let version_pad = " ".repeat(if len >= 50 { 3 } else { 50 - len });
-
-                        format!(
-                            "  {}{}{}",
-                            location,
-                            version_pad,
-                            version.to_string().yellow()
-                        )
-                    })
-                    .collect::<Vec<String>>()
-                    .join("\n")
+            .map(|(version, dependency)| {
+                format!(
+                    r#"  {}      "{}": "{}""#,
+                    "~".yellow(),
+                    dependency.white(),
+                    version.to_string().yellow()
+                )
             })
             .collect::<Vec<String>>()
-            .join("\n")
+            .join(",\n");
+
+        format!(
+            r#"  │ {{
+  │   "{}": {{
+{}
+  │   }}
+  │ }}"#,
+            "dependencies".white(),
+            deps,
+        )
+        .bright_black()
+        .to_string()
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Owned(format!("Dependencies for {} aren't synced.", self.r#type))
+        Cow::Owned(format!("{} dependencies aren't synced.", self.r#type))
     }
 
     fn fix(&mut self, _package_type: &super::PackageType) -> anyhow::Result<()> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rules::IssueLevel;
+
+    #[test]
+    fn test() {
+        let versions = vec![
+            (SemVersion::parse("1.0.0").unwrap(), "react".to_string()),
+            (SemVersion::parse("2.0.0").unwrap(), "react-dom".to_string()),
+        ]
+        .into_iter()
+        .collect();
+
+        let issue = UnsyncSimilarDependenciesIssue::new(SimilarDependency::React, versions);
+
+        assert_eq!(issue.name(), "unsync-similar-dependencies");
+        assert_eq!(issue.level(), IssueLevel::Error);
+        assert_eq!(issue.versions.len(), 2);
+        assert_eq!(issue.why(), "React dependencies aren't synced.".to_string());
+    }
+
+    #[test]
+    fn basic() {
+        let versions = vec![
+            (SemVersion::parse("1.0.0").unwrap(), "react".to_string()),
+            (SemVersion::parse("2.0.0").unwrap(), "react-dom".to_string()),
+        ]
+        .into_iter()
+        .collect();
+
+        let issue = UnsyncSimilarDependenciesIssue::new(SimilarDependency::React, versions);
+
+        colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
     }
 }

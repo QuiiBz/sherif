@@ -1,0 +1,10 @@
+---
+source: src/rules/unsync_similar_dependencies.rs
+expression: issue.message()
+---
+  │ {
+  │   "dependencies": {
+  ~      "react": "1.0.0",
+  ~      "react-dom": "2.0.0"
+  │   }
+  │ }
