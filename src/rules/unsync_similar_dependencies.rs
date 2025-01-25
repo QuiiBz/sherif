@@ -125,7 +125,10 @@ impl Issue for UnsyncSimilarDependenciesIssue {
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Owned(format!("{} dependencies aren't synced.", self.r#type))
+        Cow::Owned(format!(
+            "Similar {} dependencies should use the same version.",
+            self.r#type
+        ))
     }
 
     fn fix(&mut self, _package_type: &super::PackageType) -> anyhow::Result<()> {
@@ -152,7 +155,10 @@ mod tests {
         assert_eq!(issue.name(), "unsync-similar-dependencies");
         assert_eq!(issue.level(), IssueLevel::Error);
         assert_eq!(issue.versions.len(), 2);
-        assert_eq!(issue.why(), "React dependencies aren't synced.".to_string());
+        assert_eq!(
+            issue.why(),
+            "Similar React dependencies should use the same version."
+        );
     }
 
     #[test]

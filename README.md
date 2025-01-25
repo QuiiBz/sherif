@@ -127,6 +127,10 @@ sherif -i react@17.0.2 -i next@13.2.4
 sherif -i react -i next
 ```
 
+### `unsync-similar-dependencies` ❌
+
+Similar dependencies in a given `package.json` should use the same version. For example, if you use both `react` and `react-dom` dependencies in the same `package.json`, this rule will enforce that they use the same version.
+
 #### `non-existant-packages` ⚠️
 
 All paths defined in the workspace (the root `package.json`' `workspaces` field or `pnpm-workspace.yaml`) should match at least one package.
