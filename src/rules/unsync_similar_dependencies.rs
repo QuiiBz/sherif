@@ -29,18 +29,18 @@ impl TryFrom<&str> for SimilarDependency {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "react" | "react-dom" => Ok(Self::React),
-            "next"
+            "eslint-config-next"
             | "@next/eslint-plugin-next"
-            | "eslint-config-next"
+            | "@next/font"
             | "@next/bundle-analyzer"
-            | "@next/third-parties"
-            | "@next/mdx" => Ok(Self::NextJS),
-            "turbo"
-            | "turbo-ignore"
-            | "eslint-config-turbo"
+            | "@next/mdx"
+            | "next"
+            | "@next/third-parties" => Ok(Self::NextJS),
+            "eslint-config-turbo"
             | "eslint-plugin-turbo"
             | "@turbo/gen"
-            | "@turbo/workspaces" => Ok(Self::Turborepo),
+            | "turbo-ignore"
+            | "turbo" => Ok(Self::Turborepo),
             "@tanstack/eslint-plugin-query"
             | "@tanstack/query-async-storage-persister"
             | "@tanstack/query-broadcast-client-experimental"
