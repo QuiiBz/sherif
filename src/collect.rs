@@ -310,22 +310,14 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     for (name, versions) in all_dependencies {
         if let Ok(similar_dependency) = SimilarDependency::try_from(name.as_str()) {
             for (path, version) in versions.iter() {
-                let map = similar_dependencies_by_package
+                similar_dependencies_by_package
                     .entry(path.clone())
                     .or_insert_with(
                         IndexMap::<SimilarDependency, IndexMap<SemVersion, String>>::new,
-                    );
-
-                if map.contains_key(&similar_dependency) {
-                    map.get_mut(&similar_dependency)
-                        .unwrap()
-                        .insert(version.clone(), name.clone());
-                } else {
-                    map.insert(
-                        similar_dependency.clone(),
-                        [(version.clone(), name.clone())].iter().cloned().collect(),
-                    );
-                }
+                    )
+                    .entry(similar_dependency.clone())
+                    .or_insert_with(IndexMap::new)
+                    .insert(version.clone(), name.clone());
             }
         }
 
