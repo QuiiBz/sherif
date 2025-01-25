@@ -33,6 +33,8 @@ npx sherif@latest
 
 We recommend running Sherif in your CI once [all errors are fixed](#autofix). Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
 
+When using the GitHub Action, it will search for a `sherif` script in the root `package.json` and use the same arguments automatically to avoid repeating them twice. You can override this behaviour with the `args` parameter.
+
 <details>
 
 <summary>GitHub Actions example</summary>
@@ -51,7 +53,7 @@ jobs:
       - uses: QuiiBz/sherif@v1
         # Optionally, you can specify a version and arguments to run Sherif with:
         # with:
-          # version: 'v1.0.2'
+          # version: 'v1.1.1'
           # args: '--ignore-rule root-package-manager-field'
 
 # Using `npx` to run Sherif
@@ -67,7 +69,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: npx sherif@1.0.2
+      - run: npx sherif@1.1.1
 ```
 
 </details>
@@ -82,7 +84,7 @@ sherif --fix
 
 ### No-install mode
 
-If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag: 
+If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag:
 
 ```bash
 sherif --fix --no-install
@@ -122,6 +124,9 @@ You can ignore this rule for a specific dependency and version or all versions o
 ```bash
 # Ignore only the specific dependency version mismatch
 sherif -i react@17.0.2 -i next@13.2.4
+
+# Ignore all versions mismatch of dependencies that start with @next/
+sherif -i @next/*
 
 # Completely ignore all versions mismatch of these dependencies
 sherif -i react -i next
@@ -183,4 +188,3 @@ Dependencies should be ordered alphabetically to prevent complex diffs when inst
 ## License
 
 [MIT](./LICENSE)
-

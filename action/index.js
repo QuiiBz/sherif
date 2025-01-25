@@ -32590,7 +32590,7 @@ function run() {
             // Get inputs
             const version = core.getInput('version');
             const token = core.getInput('github-token');
-            const additionalArgs = core.getInput('args');
+            let additionalArgs = core.getInput('args');
             // Initialize octokit
             const octokit = github.getOctokit(token);
             // Determine release to download
@@ -32655,6 +32655,9 @@ function run() {
             core.setOutput('sherif-path', binaryPath);
             core.info('Sherif has been installed successfully');
             // Prepare arguments
+            if (!additionalArgs) {
+                additionalArgs = (yield getArgsFromPackageJson()) || '';
+            }
             const args = additionalArgs.split(' ').filter(arg => arg !== '');
             // Configure output options to preserve colors
             const options = {
@@ -32676,6 +32679,25 @@ function run() {
             else {
                 core.setFailed('An unexpected error occurred');
             }
+        }
+    });
+}
+function getArgsFromPackageJson() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const packageJsonFile = yield fsp.readFile(path.resolve(process.cwd(), 'package.json'));
+            const packageJson = JSON.parse(packageJsonFile.toString());
+            // Extract args from the `sherif` script in package.json, starting after
+            // `sherif ` and ending before the next `&&` or end of line
+            const regexResult = /sherif\s([^&&]*)/g.exec(packageJson.scripts.sherif);
+            if (regexResult && regexResult.length > 1) {
+                const args = regexResult[1];
+                core.info(`Using the arguments "${args}" from the root package.json`);
+                return args;
+            }
+        }
+        catch (_a) {
+            core.info('Failed to extract args from package.json');
         }
     });
 }
