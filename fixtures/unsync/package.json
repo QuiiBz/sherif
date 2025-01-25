@@ -1,0 +1,8 @@
+{
+  "name": "unsync",
+  "private": true,
+  "packageManager": "pnpm@7.0.0",
+  "workspaces": [
+    "packages/*"
+  ]
+}

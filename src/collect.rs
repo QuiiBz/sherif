@@ -1,11 +1,15 @@
 use crate::args::Args;
 use crate::packages::root::RootPackage;
+use crate::packages::semversion::SemVersion;
 use crate::packages::{Package, PackagesList};
 use crate::printer::print_error;
 use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::non_existant_packages::NonExistantPackagesIssue;
 use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
 use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
+use crate::rules::unsync_similar_dependencies::{
+    SimilarDependency, UnsyncSimilarDependenciesIssue,
+};
 use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
@@ -237,6 +241,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
 
     let mut all_dependencies = IndexMap::new();
     let mut joined_dependencies = IndexMap::new();
+    let mut similar_dependencies_by_package = IndexMap::new();
 
     if let Some(dependencies) = root_package.get_dependencies() {
         joined_dependencies.extend(dependencies);
@@ -303,6 +308,19 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     }
 
     for (name, versions) in all_dependencies {
+        if let Ok(similar_dependency) = SimilarDependency::try_from(name.as_str()) {
+            for (path, version) in versions.iter() {
+                similar_dependencies_by_package
+                    .entry(path.clone())
+                    .or_insert_with(
+                        IndexMap::<SimilarDependency, IndexMap<SemVersion, String>>::new,
+                    )
+                    .entry(similar_dependency.clone())
+                    .or_insert_with(IndexMap::new)
+                    .insert(version.clone(), name.clone());
+            }
+        }
+
         let mut filtered_versions = versions
             .iter()
             .filter(|(_, version)| {
@@ -339,6 +357,17 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                 PackageType::None,
                 MultipleDependencyVersionsIssue::new(name, filtered_versions),
             );
+        }
+    }
+
+    for (path, similar_dependencies) in similar_dependencies_by_package {
+        for (similar_dependency, versions) in similar_dependencies {
+            if versions.len() > 1 {
+                issues.add_raw(
+                    PackageType::Package(path.clone()),
+                    UnsyncSimilarDependenciesIssue::new(similar_dependency, versions),
+                );
+            }
         }
     }
 
@@ -776,6 +805,37 @@ mod test {
                 .unwrap()[0]
                 .name(),
             "unordered-dependencies"
+        );
+    }
+
+    #[test]
+    fn collect_unsync_similar_dependencies() {
+        let args = Args {
+            path: "fixtures/unsync".into(),
+            fix: false,
+            no_install: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "unsync");
+        assert_eq!(packages_list.packages.len(), 2);
+
+        let issues = collect_issues(&args, packages_list);
+        assert_eq!(issues.total_len(), 2);
+
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues
+                .get(&PackageType::Package(
+                    "fixtures/unsync/packages/def".to_string()
+                ))
+                .unwrap()[0]
+                .name(),
+            "unsync-similar-dependencies"
         );
     }
 }

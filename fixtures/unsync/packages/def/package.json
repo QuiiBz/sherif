@@ -1,0 +1,8 @@
+{
+  "name": "def",
+  "dependencies": {
+    "react": "1.0.0",
+    "turbo": "2.0.0",
+    "turbo-ignore": "3.0.0"
+  }
+}

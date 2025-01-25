@@ -1,7 +1,10 @@
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use indexmap::IndexMap;
-use std::{borrow::Cow, fmt::Display};
+use std::{
+    borrow::Cow,
+    fmt::{Debug, Display},
+};
 
 pub mod empty_dependencies;
 pub mod multiple_dependency_versions;
@@ -12,6 +15,7 @@ pub mod root_package_manager_field;
 pub mod root_package_private_field;
 pub mod types_in_dependencies;
 pub mod unordered_dependencies;
+pub mod unsync_similar_dependencies;
 
 pub const ERROR: &str = "⨯";
 pub const WARNING: &str = "⚠️";

@@ -132,6 +132,21 @@ sherif -i @next/*
 sherif -i react -i next
 ```
 
+### `unsync-similar-dependencies` ❌
+
+Similar dependencies in a given `package.json` should use the same version. For example, if you use both `react` and `react-dom` dependencies in the same `package.json`, this rule will enforce that they use the same version.
+
+<details>
+
+<summary>List of detected similar dependencies</summary>
+
+- `react`, `react-dom`
+- `eslint-config-next`, `@next/eslint-plugin-next`, `@next/font` `@next/bundle-analyzer`, `@next/third-parties`, `@next/mdx`, `next`
+- `eslint-config-turbo`, `eslint-plugin-turbo`, `@turbo/gen`, `turbo-ignore`, `turbo`
+- `@tanstack/eslint-plugin-query`, `@tanstack/query-async-storage-persister`, `@tanstack/query-broadcast-client-experimental`, `@tanstack/query-core`, `@tanstack/query-devtools`, `@tanstack/query-persist-client-core`, `@tanstack/query-sync-storage-persister`, `@tanstack/react-query`, `@tanstack/react-query-devtools`, `@tanstack/react-query-persist-client`, `@tanstack/react-query-next-experimental`, `@tanstack/solid-query`, `@tanstack/solid-query-devtools`, `@tanstack/solid-query-persist-client`, `@tanstack/svelte-query`, `@tanstack/svelte-query-devtools`, `@tanstack/svelte-query-persist-client`, `@tanstack/vue-query`, `@tanstack/vue-query-devtools`, `@tanstack/angular-query-devtools-experimental`, `@tanstack/angular-query-experimental`
+
+</details>
+
 #### `non-existant-packages` ⚠️
 
 All paths defined in the workspace (the root `package.json`' `workspaces` field or `pnpm-workspace.yaml`) should match at least one package.
