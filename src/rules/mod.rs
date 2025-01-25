@@ -1,7 +1,10 @@
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use indexmap::IndexMap;
-use std::{borrow::Cow, fmt::Display};
+use std::{
+    borrow::Cow,
+    fmt::{Debug, Display},
+};
 
 pub mod empty_dependencies;
 pub mod multiple_dependency_versions;

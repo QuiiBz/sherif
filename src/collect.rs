@@ -803,4 +803,35 @@ mod test {
             "unordered-dependencies"
         );
     }
+
+    #[test]
+    fn collect_unsync_similar_dependencies() {
+        let args = Args {
+            path: "fixtures/unsync".into(),
+            fix: false,
+            no_install: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "unsync");
+        assert_eq!(packages_list.packages.len(), 2);
+
+        let issues = collect_issues(&args, packages_list);
+        assert_eq!(issues.total_len(), 2);
+
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+
+        assert_eq!(
+            issues
+                .get(&PackageType::Package(
+                    "fixtures/unsync/packages/def".to_string()
+                ))
+                .unwrap()[0]
+                .name(),
+            "unsync-similar-dependencies"
+        );
+    }
 }
