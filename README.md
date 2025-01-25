@@ -132,7 +132,7 @@ sherif -i @next/*
 sherif -i react -i next
 ```
 
-### `unsync-similar-dependencies` ❌
+#### `unsync-similar-dependencies` ❌
 
 Similar dependencies in a given `package.json` should use the same version. For example, if you use both `react` and `react-dom` dependencies in the same `package.json`, this rule will enforce that they use the same version.
 
