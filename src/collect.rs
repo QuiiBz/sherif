@@ -51,8 +51,17 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
 
     let mut packages_issues: Vec<BoxIssue> = Vec::new();
 
-    let mut add_package =
-        |packages_issues: &mut Vec<BoxIssue>, path: PathBuf| match Package::new(path.clone()) {
+    let mut add_package = |packages_issues: &mut Vec<BoxIssue>, path: PathBuf| {
+        // Ignore hidden directories, e.g. `.npm`, `.react-email`
+        if let Some(stem) = path.file_stem() {
+            if let Some(stem) = stem.to_str() {
+                if stem.starts_with('.') {
+                    return;
+                }
+            }
+        }
+
+        match Package::new(path.clone()) {
             Ok(package) => packages.push(package),
             Err(error) => {
                 if error.to_string().contains("not found") {
@@ -64,7 +73,8 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                     std::process::exit(1);
                 }
             }
-        };
+        }
+    };
 
     if let Some(packages) = &packages_list {
         let packages = packages
