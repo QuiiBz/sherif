@@ -6,6 +6,7 @@ use std::{borrow::Cow, fmt::Display, hash::Hash};
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum SimilarDependency {
+    Trpc,
     React,
     NextJS,
     Turborepo,
@@ -15,6 +16,7 @@ pub enum SimilarDependency {
 impl Display for SimilarDependency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Trpc => write!(f, "tRPC"),
             Self::React => write!(f, "React"),
             Self::NextJS => write!(f, "Next.js"),
             Self::Turborepo => write!(f, "Turborepo"),
@@ -28,6 +30,7 @@ impl TryFrom<&str> for SimilarDependency {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
+            "@trpc/client" | "@trpc/server" | "@trpc/next" | "@trpc/react-query" => Ok(Self::Trpc),
             "react" | "react-dom" => Ok(Self::React),
             "eslint-config-next"
             | "@next/eslint-plugin-next"
