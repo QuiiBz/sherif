@@ -13,6 +13,7 @@ pub enum SimilarDependency {
     Turborepo,
     TanstackQuery,
     Prisma,
+    TypescriptEslint,
 }
 
 impl Display for SimilarDependency {
@@ -25,6 +26,7 @@ impl Display for SimilarDependency {
             Self::Turborepo => write!(f, "Turborepo"),
             Self::TanstackQuery => write!(f, "Tanstack Query"),
             Self::Prisma => write!(f, "Prisma"),
+            Self::TypescriptEslint => write!(f, "typescript-eslint"),
         }
     }
 }
@@ -160,6 +162,9 @@ impl TryFrom<&str> for SimilarDependency {
             "prisma"
             | "@prisma/client"
             | "@prisma/instrumentation" => Ok(Self::Prisma),
+            "typescript-eslint"
+            | "@typescript-eslint/eslint-plugin"
+            | "@typescript-eslint/parser" => Ok(Self::TypescriptEslint),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
