@@ -148,6 +148,7 @@ Similar dependencies in a given `package.json` should use the same version. For 
 - `prisma`, `@prisma/client`, `@prisma/instrumentation`
 - `typescript-eslint`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`
 - `@stylistic/eslint-plugin-js`, `@stylistic/eslint-plugin-ts`, `@stylistic/eslint-plugin-migrate`, `@stylistic/eslint-plugin`, `@stylistic/eslint-plugin-jsx`, `@stylistic/eslint-plugin-plus`
+- `playwright`, `@playwright/test`
 
 </details>
 
