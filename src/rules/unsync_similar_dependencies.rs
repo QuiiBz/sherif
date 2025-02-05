@@ -12,6 +12,7 @@ pub enum SimilarDependency {
     Storybook,
     Turborepo,
     TanstackQuery,
+    Prisma,
 }
 
 impl Display for SimilarDependency {
@@ -23,6 +24,7 @@ impl Display for SimilarDependency {
             Self::Storybook => write!(f, "Storybook"),
             Self::Turborepo => write!(f, "Turborepo"),
             Self::TanstackQuery => write!(f, "Tanstack Query"),
+            Self::Prisma => write!(f, "Prisma"),
         }
     }
 }
@@ -155,6 +157,9 @@ impl TryFrom<&str> for SimilarDependency {
             | "@tanstack/vue-query-devtools"
             | "@tanstack/angular-query-devtools-experimental"
             | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
+            "prisma"
+            | "@prisma/client"
+            | "@prisma/instrumentation" => Ok(Self::Prisma),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
