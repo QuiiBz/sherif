@@ -147,6 +147,7 @@ Similar dependencies in a given `package.json` should use the same version. For 
 - `@tanstack/eslint-plugin-query`, `@tanstack/query-async-storage-persister`, `@tanstack/query-broadcast-client-experimental`, `@tanstack/query-core`, `@tanstack/query-devtools`, `@tanstack/query-persist-client-core`, `@tanstack/query-sync-storage-persister`, `@tanstack/react-query`, `@tanstack/react-query-devtools`, `@tanstack/react-query-persist-client`, `@tanstack/react-query-next-experimental`, `@tanstack/solid-query`, `@tanstack/solid-query-devtools`, `@tanstack/solid-query-persist-client`, `@tanstack/svelte-query`, `@tanstack/svelte-query-devtools`, `@tanstack/svelte-query-persist-client`, `@tanstack/vue-query`, `@tanstack/vue-query-devtools`, `@tanstack/angular-query-devtools-experimental`, `@tanstack/angular-query-experimental`
 - `prisma`, `@prisma/client`, `@prisma/instrumentation`
 - `typescript-eslint`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`
+- `@stylistic/eslint-plugin-js`, `@stylistic/eslint-plugin-ts`, `@stylistic/eslint-plugin-migrate`, `@stylistic/eslint-plugin`, `@stylistic/eslint-plugin-jsx`, `@stylistic/eslint-plugin-plus`
 
 </details>
 

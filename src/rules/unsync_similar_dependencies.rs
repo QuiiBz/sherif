@@ -14,6 +14,7 @@ pub enum SimilarDependency {
     TanstackQuery,
     Prisma,
     TypescriptEslint,
+    EslintStylistic,
 }
 
 impl Display for SimilarDependency {
@@ -27,6 +28,7 @@ impl Display for SimilarDependency {
             Self::TanstackQuery => write!(f, "Tanstack Query"),
             Self::Prisma => write!(f, "Prisma"),
             Self::TypescriptEslint => write!(f, "typescript-eslint"),
+            Self::EslintStylistic => write!(f, "ESLint Stylistic"),
         }
     }
 }
@@ -165,6 +167,12 @@ impl TryFrom<&str> for SimilarDependency {
             "typescript-eslint"
             | "@typescript-eslint/eslint-plugin"
             | "@typescript-eslint/parser" => Ok(Self::TypescriptEslint),
+            "@stylistic/eslint-plugin-js"
+            | "@stylistic/eslint-plugin-ts"
+            | "@stylistic/eslint-plugin-migrate"
+            | "@stylistic/eslint-plugin"
+            | "@stylistic/eslint-plugin-jsx"
+            | "@stylistic/eslint-plugin-plus" => Ok(Self::EslintStylistic),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
