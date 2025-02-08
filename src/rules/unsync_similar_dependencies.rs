@@ -15,7 +15,7 @@ pub enum SimilarDependency {
     Prisma,
     TypescriptEslint,
     EslintStylistic,
-    Playwright
+    Playwright,
 }
 
 impl Display for SimilarDependency {
@@ -30,7 +30,7 @@ impl Display for SimilarDependency {
             Self::Prisma => write!(f, "Prisma"),
             Self::TypescriptEslint => write!(f, "typescript-eslint"),
             Self::EslintStylistic => write!(f, "ESLint Stylistic"),
-            Self::Playwright => write!(f, "Playwright")
+            Self::Playwright => write!(f, "Playwright"),
         }
     }
 }
@@ -163,9 +163,7 @@ impl TryFrom<&str> for SimilarDependency {
             | "@tanstack/vue-query-devtools"
             | "@tanstack/angular-query-devtools-experimental"
             | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
-            "prisma"
-            | "@prisma/client"
-            | "@prisma/instrumentation" => Ok(Self::Prisma),
+            "prisma" | "@prisma/client" | "@prisma/instrumentation" => Ok(Self::Prisma),
             "typescript-eslint"
             | "@typescript-eslint/eslint-plugin"
             | "@typescript-eslint/parser" => Ok(Self::TypescriptEslint),
@@ -175,8 +173,7 @@ impl TryFrom<&str> for SimilarDependency {
             | "@stylistic/eslint-plugin"
             | "@stylistic/eslint-plugin-jsx"
             | "@stylistic/eslint-plugin-plus" => Ok(Self::EslintStylistic),
-            "playwright"
-            | "@playwright/test" => Ok(Self::Playwright),
+            "playwright" | "@playwright/test" => Ok(Self::Playwright),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
