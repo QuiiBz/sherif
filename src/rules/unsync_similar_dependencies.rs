@@ -12,6 +12,10 @@ pub enum SimilarDependency {
     Storybook,
     Turborepo,
     TanstackQuery,
+    Prisma,
+    TypescriptEslint,
+    EslintStylistic,
+    Playwright,
 }
 
 impl Display for SimilarDependency {
@@ -23,6 +27,10 @@ impl Display for SimilarDependency {
             Self::Storybook => write!(f, "Storybook"),
             Self::Turborepo => write!(f, "Turborepo"),
             Self::TanstackQuery => write!(f, "Tanstack Query"),
+            Self::Prisma => write!(f, "Prisma"),
+            Self::TypescriptEslint => write!(f, "typescript-eslint"),
+            Self::EslintStylistic => write!(f, "ESLint Stylistic"),
+            Self::Playwright => write!(f, "Playwright"),
         }
     }
 }
@@ -155,6 +163,17 @@ impl TryFrom<&str> for SimilarDependency {
             | "@tanstack/vue-query-devtools"
             | "@tanstack/angular-query-devtools-experimental"
             | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
+            "prisma" | "@prisma/client" | "@prisma/instrumentation" => Ok(Self::Prisma),
+            "typescript-eslint"
+            | "@typescript-eslint/eslint-plugin"
+            | "@typescript-eslint/parser" => Ok(Self::TypescriptEslint),
+            "@stylistic/eslint-plugin-js"
+            | "@stylistic/eslint-plugin-ts"
+            | "@stylistic/eslint-plugin-migrate"
+            | "@stylistic/eslint-plugin"
+            | "@stylistic/eslint-plugin-jsx"
+            | "@stylistic/eslint-plugin-plus" => Ok(Self::EslintStylistic),
+            "playwright" | "@playwright/test" => Ok(Self::Playwright),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
