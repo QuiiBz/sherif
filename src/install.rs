@@ -90,12 +90,20 @@ mod test {
 
         fs::File::create("package-lock.json").unwrap();
         assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Npm);
-
         fs::remove_file("package-lock.json").unwrap();
+
+        fs::File::create("bun.lockb").unwrap();
+        assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Bun);
+        fs::remove_file("bun.lockb").unwrap();
+
+        fs::File::create("bun.lock").unwrap();
+        assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Bun);
+        fs::remove_file("bun.lock").unwrap();
+
         fs::File::create("yarn.lock").unwrap();
         assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Yarn);
-
         fs::remove_file("yarn.lock").unwrap();
+
         assert_eq!(PackageManager::resolve().unwrap(), PackageManager::Pnpm);
     }
 
