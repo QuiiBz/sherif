@@ -18,7 +18,7 @@ impl PackageManager {
     pub fn resolve() -> Result<Self> {
         if fs::metadata("package-lock.json").is_ok() {
             return Ok(PackageManager::Npm);
-        } else if fs::metadata("bun.lockb").is_ok() {
+        } else if fs::metadata("bun.lockb").is_ok() || fs::metadata("bun.lock").is_ok() {
             return Ok(PackageManager::Bun);
         } else if fs::metadata("yarn.lock").is_ok() {
             return Ok(PackageManager::Yarn);
