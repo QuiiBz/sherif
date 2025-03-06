@@ -163,7 +163,16 @@ impl TryFrom<&str> for SimilarDependency {
             | "@tanstack/vue-query-devtools"
             | "@tanstack/angular-query-devtools-experimental"
             | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
-            "prisma" | "@prisma/client" | "@prisma/instrumentation" => Ok(Self::Prisma),
+            "prisma"
+            | "@prisma/client"
+            | "@prisma/instrumentation"
+            | "@prisma/adapter-pg"
+            | "@prisma/adapter-neon"
+            | "@prisma/adapter-planetscale"
+            | "@prisma/adapter-d1"
+            | "@prisma/adapter-libsql"
+            | "@prisma/adapter-pg-worker"
+            | "@prisma/pg-worker" => Ok(Self::Prisma),
             "typescript-eslint"
             | "@typescript-eslint/eslint-plugin"
             | "@typescript-eslint/parser" => Ok(Self::TypescriptEslint),
