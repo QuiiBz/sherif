@@ -16,6 +16,7 @@ pub enum SimilarDependency {
     TypescriptEslint,
     EslintStylistic,
     Playwright,
+    Lexical,
 }
 
 impl Display for SimilarDependency {
@@ -31,6 +32,7 @@ impl Display for SimilarDependency {
             Self::TypescriptEslint => write!(f, "typescript-eslint"),
             Self::EslintStylistic => write!(f, "ESLint Stylistic"),
             Self::Playwright => write!(f, "Playwright"),
+            Self::Lexical => write!(f, "Lexical"),
         }
     }
 }
@@ -163,7 +165,16 @@ impl TryFrom<&str> for SimilarDependency {
             | "@tanstack/vue-query-devtools"
             | "@tanstack/angular-query-devtools-experimental"
             | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
-            "prisma" | "@prisma/client" | "@prisma/instrumentation" => Ok(Self::Prisma),
+            "prisma"
+            | "@prisma/client"
+            | "@prisma/instrumentation"
+            | "@prisma/adapter-pg"
+            | "@prisma/adapter-neon"
+            | "@prisma/adapter-planetscale"
+            | "@prisma/adapter-d1"
+            | "@prisma/adapter-libsql"
+            | "@prisma/adapter-pg-worker"
+            | "@prisma/pg-worker" => Ok(Self::Prisma),
             "typescript-eslint"
             | "@typescript-eslint/eslint-plugin"
             | "@typescript-eslint/parser" => Ok(Self::TypescriptEslint),
@@ -174,6 +185,31 @@ impl TryFrom<&str> for SimilarDependency {
             | "@stylistic/eslint-plugin-jsx"
             | "@stylistic/eslint-plugin-plus" => Ok(Self::EslintStylistic),
             "playwright" | "@playwright/test" => Ok(Self::Playwright),
+            "lexical"
+            | "@lexical/clipboard"
+            | "@lexical/code"
+            | "@lexical/devtools-core"
+            | "@lexical/dragon"
+            | "@lexical/eslint-plugin"
+            | "@lexical/file"
+            | "@lexical/hashtag"
+            | "@lexical/headless"
+            | "@lexical/history"
+            | "@lexical/html"
+            | "@lexical/link"
+            | "@lexical/list"
+            | "@lexical/mark"
+            | "@lexical/markdown"
+            | "@lexical/offset"
+            | "@lexical/overflow"
+            | "@lexical/plain-text"
+            | "@lexical/react"
+            | "@lexical/rich-text"
+            | "@lexical/selection"
+            | "@lexical/table"
+            | "@lexical/text"
+            | "@lexical/utils"
+            | "@lexical/yjs" => Ok(Self::Lexical),
             _ => Err(anyhow::anyhow!("Unknown similar dependency")),
         }
     }
