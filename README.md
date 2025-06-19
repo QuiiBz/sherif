@@ -84,7 +84,7 @@ sherif --fix
 
 ### Autofixing the [`multiple-dependency-versions`](#multiple-dependency-versions-) rule
 
-By default, running `--fix` with the `multiple-dependency-versions` rule will ask you to select which version to use for each dependency that has multiple versions across the monorepo. If that doesn't work for you (e.g., you are running Sherif in a non-interactive environment), you can use the `--select` (of `-s`) flag to automatically select the highest or lowest version of that dependency:
+By default, running `--fix` with the `multiple-dependency-versions` rule will ask you to select which version to use for each dependency with multiple versions across the monorepo. If that doesn't work for you (e.g., you are running Sherif in a non-interactive environment), you can use the `--select` (of `-s`) flag to automatically select the highest or lowest version of every dependency:
 
 ```bash
 # Autofix and select the highest version for each dependency matching the `multiple-dependency-versions` rule
