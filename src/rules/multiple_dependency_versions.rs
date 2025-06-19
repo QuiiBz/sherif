@@ -1,5 +1,7 @@
 use super::{Issue, IssueLevel, PackageType};
-use crate::{json, packages::semversion::SemVersion, printer::get_render_config};
+use crate::{
+    args::AutofixSelect, json, packages::semversion::SemVersion, printer::get_render_config,
+};
 use anyhow::Result;
 use colored::Colorize;
 use indexmap::IndexMap;
@@ -10,18 +12,57 @@ use std::{borrow::Cow, fs, path::PathBuf};
 pub struct MultipleDependencyVersionsIssue {
     name: String,
     versions: IndexMap<String, SemVersion>,
+    select: Option<AutofixSelect>,
     fixed: bool,
 }
 
 impl MultipleDependencyVersionsIssue {
-    pub fn new(name: String, mut versions: IndexMap<String, SemVersion>) -> Box<Self> {
+    pub fn new(
+        name: String,
+        mut versions: IndexMap<String, SemVersion>,
+        select: Option<AutofixSelect>,
+    ) -> Box<Self> {
         versions.sort_by(|_, a, _, b| b.cmp(a));
 
         Box::new(Self {
             name,
             versions,
+            select,
             fixed: false,
         })
+    }
+
+    fn get_autofix_version(&self) -> Result<Option<String>> {
+        let mut sorted_versions = self.versions.values().collect::<Vec<_>>();
+        sorted_versions.sort_by(|a, b| b.cmp(a));
+
+        if let Some(select) = &self.select {
+            let autofix_version = match select {
+                AutofixSelect::Highest => sorted_versions.first().map(|v| v.to_string()),
+                AutofixSelect::Lowest => sorted_versions.last().map(|v| v.to_string()),
+            };
+            Ok(autofix_version)
+        } else {
+            let message = format!("Select the version of {} to use:", self.name.bold());
+            let mut versions = sorted_versions
+                .iter()
+                .map(|version| format_version(version, &self.versions, true))
+                .collect::<Vec<_>>();
+            versions.dedup();
+
+            let autofix_version = Select::new(&message, versions)
+                .with_render_config(get_render_config())
+                .with_help_message("Enter to select, Esc to skip")
+                .prompt_skippable()?;
+            let autofix_version = autofix_version.map(|select| {
+                select
+                    .split_once(' ')
+                    .expect("Please report this as a bug")
+                    .0
+                    .to_string()
+            });
+            Ok(autofix_version)
+        }
     }
 }
 
@@ -114,29 +155,7 @@ impl Issue for MultipleDependencyVersionsIssue {
     }
 
     fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
-        let message = format!("Select the version of {} to use:", self.name.bold());
-
-        let mut sorted_versions = self.versions.values().collect::<Vec<_>>();
-        sorted_versions.sort_by(|a, b| b.cmp(a));
-
-        let mut versions = sorted_versions
-            .iter()
-            .map(|version| format_version(version, &self.versions, true))
-            .collect::<Vec<_>>();
-        versions.dedup();
-
-        let select = Select::new(&message, versions)
-            .with_render_config(get_render_config())
-            .with_help_message("Enter to select, Esc to skip")
-            .prompt_skippable()?;
-
-        if let Some(select) = select {
-            let version = select
-                .split_once(' ')
-                .expect("Please report this as a bug")
-                .0
-                .to_string();
-
+        if let Some(autofix_version) = self.get_autofix_version()? {
             for package in self.versions.keys() {
                 let path = PathBuf::from(package).join("package.json");
                 let value = fs::read_to_string(&path)?;
@@ -147,7 +166,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                     let dependencies = dependencies.as_object_mut().unwrap();
 
                     if let Some(dependency) = dependencies.get_mut(&self.name) {
-                        *dependency = serde_json::Value::String(version.to_string());
+                        *dependency = serde_json::Value::String(autofix_version.clone());
                     }
                 }
 
@@ -155,7 +174,7 @@ impl Issue for MultipleDependencyVersionsIssue {
                     let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
 
                     if let Some(dev_dependency) = dev_dependencies.get_mut(&self.name) {
-                        *dev_dependency = serde_json::Value::String(version.to_string());
+                        *dev_dependency = serde_json::Value::String(autofix_version.clone());
                     }
                 }
 
@@ -183,6 +202,7 @@ mod test {
                 "./packages/package-b".into() => SemVersion::parse("1.2.4").unwrap(),
                 "./package-c".into() => SemVersion::parse("1.2.5").unwrap(),
             },
+            None,
         );
 
         assert_eq!(issue.name(), "multiple-dependency-versions");
@@ -203,6 +223,7 @@ mod test {
                 "./packages/package-a".into() => SemVersion::parse("1.2.3").unwrap(),
                 "./packages/package-b".into() => SemVersion::parse("3.1.6").unwrap(),
             },
+            None,
         );
 
         colored::control::set_override(false);
@@ -216,6 +237,7 @@ mod test {
             indexmap::indexmap! {
                 "./package-a".into() => SemVersion::parse("1.2.3").unwrap(),
             },
+            None,
         );
 
         colored::control::set_override(false);
@@ -231,6 +253,7 @@ mod test {
                 "./apps/package-b".into() => SemVersion::parse("1.2.3").unwrap(),
                 "./packages/package-c".into() => SemVersion::parse("3.1.6").unwrap(),
             },
+            None,
         );
 
         colored::control::set_override(false);
@@ -246,6 +269,7 @@ mod test {
                 "./apps/package-b".into() => SemVersion::parse("5.0.0-next.3").unwrap(),
                 "./packages/package-c".into() => SemVersion::parse("5.0.0-next.6").unwrap(),
             },
+            None,
         );
 
         colored::control::set_override(false);
@@ -261,6 +285,7 @@ mod test {
                 "./apps/package-b".into() => SemVersion::parse("^1.2.3").unwrap(),
                 "./packages/package-c".into() => SemVersion::parse("~3.1.6").unwrap(),
             },
+            None,
         );
 
         colored::control::set_override(false);
@@ -276,6 +301,7 @@ mod test {
                 "./packages/package-b".into() => SemVersion::parse("3.1.6").unwrap(),
                 "./packages/package-c".into() => SemVersion::parse("3.1.6").unwrap(),
             },
+            None,
         );
 
         colored::control::set_override(false);

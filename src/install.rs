@@ -112,6 +112,7 @@ mod test {
         let args = Args {
             path: "fixtures/install".into(),
             fix: false,
+            select: None,
             no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
