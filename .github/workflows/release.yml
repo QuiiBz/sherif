@@ -19,14 +19,14 @@ jobs:
         build:
           - {
               NAME: linux-x64-glibc,
-              OS: ubuntu-20.04,
+              OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: x86_64-unknown-linux-gnu,
               BIN: sherif
             }
           - {
               NAME: linux-arm64-glibc,
-              OS: ubuntu-20.04,
+              OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: aarch64-unknown-linux-gnu,
               BIN: sherif
@@ -79,7 +79,7 @@ jobs:
         with:
           command: build
           args: --release --locked --target ${{ matrix.build.TARGET }}
-          use-cross: ${{ matrix.build.OS == 'ubuntu-20.04' }} # use `cross` for Linux builds
+          use-cross: ${{ matrix.build.OS == 'ubuntu-22.04' }} # use `cross` for Linux builds
 
       - name: Install node
         uses: actions/setup-node@v4
