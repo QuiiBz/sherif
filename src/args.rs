@@ -1,5 +1,20 @@
-use clap::Parser;
-use std::path::PathBuf;
+use clap::{Parser, ValueEnum};
+use std::{fmt::Display, path::PathBuf};
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum AutofixSelect {
+    Highest,
+    Lowest,
+}
+
+impl Display for AutofixSelect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AutofixSelect::Highest => write!(f, "highest"),
+            AutofixSelect::Lowest => write!(f, "lowest"),
+        }
+    }
+}
 
 #[derive(Debug, Parser)]
 pub struct Args {
@@ -10,6 +25,10 @@ pub struct Args {
     /// Fix the issues automatically, if possible.
     #[arg(long, short)]
     pub fix: bool,
+
+    /// When using `--fix` with the `multiple-dependency-versions` rule, automatically select the highest or lower version of the dependency.
+    #[arg(long, short)]
+    pub select: Option<AutofixSelect>,
 
     /// Don't run your package manager's install command when autofixing.
     #[arg(long)]

@@ -3,6 +3,7 @@ use crate::rules::IssueLevel;
 use crate::{args::Args, printer::print_error};
 use clap::Parser;
 use collect::{collect_issues, collect_packages};
+use colored::Colorize;
 use printer::{print_footer, print_issues};
 use std::time::Instant;
 
@@ -43,6 +44,14 @@ fn main() {
     let mut issues = collect_issues(&args, packages_list);
 
     if args.fix {
+        if let Some(autofix_select) = &args.select {
+            println!(
+                " {}",
+                format!("Note: automatically selecting {} dependencies for `multiple-dependency-versions` rule...", autofix_select).bright_black(),
+            );
+            println!();
+        }
+
         if let Err(error) = issues.fix() {
             print_error("Failed to fix issues", error.to_string().as_str());
             std::process::exit(1);

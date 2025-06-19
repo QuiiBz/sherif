@@ -82,11 +82,21 @@ Most issues can be automatically fixed by using the `--fix` (or `-f`) flag. Sher
 sherif --fix
 ```
 
+### Autofixing the [`multiple-dependency-versions`](#multiple-dependency-versions-) rule
+
+By default, running `--fix` with the `multiple-dependency-versions` rule will ask you to select which version to use for each dependency with multiple versions across the monorepo. If that doesn't work for you (e.g., you are running Sherif in a non-interactive environment), you can use the `--select` (of `-s`) flag to automatically select the highest or lowest version of every dependency:
+
+```bash
+# Autofix and select the highest version for each dependency matching the `multiple-dependency-versions` rule
+sherif --fix --select highest
+```
+
 ### No-install mode
 
 If you don't want Sherif to run your packager manager's `install` command after running autofix, you can use the `--no-install` flag:
 
 ```bash
+# Autofix without running the package manager's install command
 sherif --fix --no-install
 ```
 
@@ -107,9 +117,6 @@ sherif -p @repo/tools
 # Ignore all issues for packages inside `./integrations/*`
 sherif -p "./integrations/*"
 ```
-
-> **Note**
-> Sherif doesn't have many rules for now, but will likely have more in the future (along with more features).
 
 #### `empty-dependencies` ❌
 

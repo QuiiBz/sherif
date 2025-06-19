@@ -365,7 +365,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
 
             issues.add_raw(
                 PackageType::None,
-                MultipleDependencyVersionsIssue::new(name, filtered_versions),
+                MultipleDependencyVersionsIssue::new(name, filtered_versions, args.select.clone()),
             );
         }
     }
@@ -394,6 +394,7 @@ mod test {
         let args = Args {
             path: "unknown".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -414,6 +415,7 @@ mod test {
         let args = Args {
             path: "fixtures/empty".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -434,6 +436,7 @@ mod test {
         let args = Args {
             path: "fixtures/basic".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -460,6 +463,7 @@ mod test {
         let args = Args {
             path: "fixtures/pnpm".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -486,6 +490,7 @@ mod test {
         let args = Args {
             path: "fixtures/yarn-nohoist".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -512,6 +517,7 @@ mod test {
         let args = Args {
             path: "fixtures/no-workspace-pnpm".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -532,6 +538,7 @@ mod test {
         let args = Args {
             path: "fixtures/without-package-json".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -559,6 +566,7 @@ mod test {
         let args = Args {
             path: "fixtures/ignore-paths".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -594,6 +602,7 @@ mod test {
         let args = Args {
             path: "fixtures/root-issues".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -629,6 +638,7 @@ mod test {
     fn collect_root_issues_fixed() {
         let args = Args {
             fix: false,
+            select: None,
             no_install: true,
             path: "fixtures/root-issues-fixed".into(),
             ignore_rule: Vec::new(),
@@ -648,6 +658,7 @@ mod test {
         let args = Args {
             path: "fixtures/dependencies".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -685,6 +696,7 @@ mod test {
         let args = Args {
             path: "fixtures/dependencies".into(),
             fix: false,
+            select: None,
             no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -710,6 +722,7 @@ mod test {
         let args = Args {
             path: "fixtures/dependencies-star".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -739,6 +752,7 @@ mod test {
         let args = Args {
             path: "fixtures/dependencies-nested-star".into(),
             fix: false,
+            select: None,
             no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -771,6 +785,7 @@ mod test {
         let args = Args {
             path: "fixtures/pnpm-glob".into(),
             fix: false,
+            select: None,
             no_install: true,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -790,6 +805,7 @@ mod test {
         let args = Args {
             path: "fixtures/unordered".into(),
             fix: false,
+            select: None,
             no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -823,6 +839,7 @@ mod test {
         let args = Args {
             path: "fixtures/unsync".into(),
             fix: false,
+            select: None,
             no_install: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
