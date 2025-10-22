@@ -11,7 +11,6 @@ pub enum SimilarDependency {
     NextJS,
     Storybook,
     Turborepo,
-    TanstackQuery,
     Prisma,
     TypescriptEslint,
     EslintStylistic,
@@ -27,7 +26,6 @@ impl Display for SimilarDependency {
             Self::NextJS => write!(f, "Next.js"),
             Self::Storybook => write!(f, "Storybook"),
             Self::Turborepo => write!(f, "Turborepo"),
-            Self::TanstackQuery => write!(f, "Tanstack Query"),
             Self::Prisma => write!(f, "Prisma"),
             Self::TypescriptEslint => write!(f, "typescript-eslint"),
             Self::EslintStylistic => write!(f, "ESLint Stylistic"),
@@ -144,27 +142,6 @@ impl TryFrom<&str> for SimilarDependency {
             | "@storybook/experimental-nextjs-vite"
             | "@storybook/experimental-addon-test"
             | "@storybook/react-native-web-vite" => Ok(Self::Storybook),
-            "@tanstack/eslint-plugin-query"
-            | "@tanstack/query-async-storage-persister"
-            | "@tanstack/query-broadcast-client-experimental"
-            | "@tanstack/query-core"
-            | "@tanstack/query-devtools"
-            | "@tanstack/query-persist-client-core"
-            | "@tanstack/query-sync-storage-persister"
-            | "@tanstack/react-query"
-            | "@tanstack/react-query-devtools"
-            | "@tanstack/react-query-persist-client"
-            | "@tanstack/react-query-next-experimental"
-            | "@tanstack/solid-query"
-            | "@tanstack/solid-query-devtools"
-            | "@tanstack/solid-query-persist-client"
-            | "@tanstack/svelte-query"
-            | "@tanstack/svelte-query-devtools"
-            | "@tanstack/svelte-query-persist-client"
-            | "@tanstack/vue-query"
-            | "@tanstack/vue-query-devtools"
-            | "@tanstack/angular-query-devtools-experimental"
-            | "@tanstack/angular-query-experimental" => Ok(Self::TanstackQuery),
             "prisma"
             | "@prisma/client"
             | "@prisma/instrumentation"
