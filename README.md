@@ -3,7 +3,7 @@
     <img alt="" height="200px" src="https://github.com/QuiiBz/sherif/blob/main/assets/logo.png" />
   </picture>
   <br />
-  <b>Sherif</b>: Opinionated, zero-config linter for JavaScript monorepos
+  <b>Sherif</b>: Opinionated, zero-config linter for TypeScript & JavaScript monorepos
 </p>
 
 ---
@@ -12,11 +12,11 @@
 
 ## About
 
-Sherif is an opinionated, zero-config linter for JavaScript monorepos. It runs fast in any monorepo and enforces rules to provide a better, standardized DX.
+Sherif is an opinionated, zero-config linter for TypeScript & JavaScript monorepos. It runs fast in any monorepo and enforces rules to provide a better, standardized DX.
 
 ## Features
 
-- ✨ **PNPM, NPM, Yarn...**: sherif works with all package managers
+- ✨ **PNPM, Bun, NPM, Yarn...**: sherif works with all package managers
 - 🔎 **Zero-config**: it just works and prevents regressions
 - ⚡ **Fast**: doesn't need `node_modules` installed, written in 🦀 Rust
 
@@ -27,8 +27,12 @@ Run `sherif` in the root of your monorepo to list the found issues. Any error wi
 ```bash
 # PNPM
 pnpm dlx sherif@latest
+# Bun
+bunx sherif@latest
 # NPM
 npx sherif@latest
+# Yarn
+yarn dlx sherif@latest
 ```
 
 We recommend running Sherif in your CI once [all errors are fixed](#autofix). Run it by **specifying a version instead of latest**. This is useful to prevent regressions (e.g. when adding a library to a package but forgetting to update the version in other packages of the monorepo).
