@@ -1,5 +1,5 @@
 name: 'Setup Sherif'
-description: 'Setup and run Sherif, an opinionated, zero-config linter for JavaScript monorepos'
+description: 'Setup and run Sherif, an opinionated, zero-config linter for TypeScript & JavaScript monorepos'
 
 inputs:
   version:
