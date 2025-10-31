@@ -37,29 +37,18 @@ function getExePath() {
     extension = '.exe'
   }
 
-  if (os === 'linux') {
-    const variants = isMusl()
-      ? ['-musl', '']  // On musl: try musl-specific, then fall back to glibc
-      : ['', '-musl']  // On glibc: try glibc (no suffix), then fall back to musl
+  let npmPackageName = `sherif-${os}-${arch}`
 
-    for (const variant of variants) {
-      try {
-        return require.resolve(`sherif-${os}-${arch}${variant}/bin/sherif${extension}`)
-      } catch (e) {
-        // Try next variant
-      }
-    }
-    throw new Error(
-      `Couldn't find application binary inside node_modules for ${os}-${arch}`
-    )
+  if (isMusl()) {
+    npmPackageName += '-musl'
   }
 
   try {
     // Since the binary will be located inside `node_modules`, we can simply call `require.resolve`
-    return require.resolve(`sherif-${os}-${arch}/bin/sherif${extension}`)
+     return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
   } catch (e) {
     throw new Error(
-      `Couldn't find application binary inside node_modules for ${os}-${arch}`
+      `Couldn't find application binary inside node_modules for ${npmPackageName}.`
     )
   }
 }
