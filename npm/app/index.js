@@ -6,8 +6,8 @@ const fs = require('fs')
 /**
  * Detects if the system is using musl libc (e.g., Alpine Linux)
  */
-function isMusl() {
-  if (process.platform !== 'linux') {
+function isMusl(os) {
+  if (os !== 'linux') {
     return false
   }
 
@@ -39,13 +39,13 @@ function getExePath() {
 
   let npmPackageName = `sherif-${os}-${arch}`
 
-  if (isMusl()) {
+  if (isMusl(os)) {
     npmPackageName += '-musl'
   }
 
   try {
     // Since the binary will be located inside `node_modules`, we can simply call `require.resolve`
-     return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
+    return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
   } catch (e) {
     throw new Error(
       `Couldn't find application binary inside node_modules for ${npmPackageName}.`
