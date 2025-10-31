@@ -18,17 +18,31 @@ jobs:
       matrix:
         build:
           - {
-              NAME: linux-x64-glibc,
+              NAME: linux-x64,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: x86_64-unknown-linux-gnu,
               BIN: sherif
             }
           - {
-              NAME: linux-arm64-glibc,
+              NAME: linux-x64-musl,
+              OS: ubuntu-22.04,
+              TOOLCHAIN: stable,
+              TARGET: x86_64-unknown-linux-musl,
+              BIN: sherif
+            }
+          - {
+              NAME: linux-arm64,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: aarch64-unknown-linux-gnu,
+              BIN: sherif
+            }
+          - {
+              NAME: linux-arm64-musl,
+              OS: ubuntu-22.04,
+              TOOLCHAIN: stable,
+              TARGET: aarch64-unknown-linux-musl,
               BIN: sherif
             }
           - {
@@ -92,17 +106,21 @@ jobs:
         run: |
           cd npm
           # derive the OS and architecture from the build matrix name
-          # note: when split by a hyphen, first part is the OS and the second is the architecture
+          # note: NAME format is either "os-arch" or "os-arch-variant" (e.g., linux-x64-musl)
           node_os=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f1)
           export node_os
           node_arch=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f2)
           export node_arch
+          node_variant=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f3)
+          export node_variant
           # set the version
           export node_version="${{ env.RELEASE_VERSION }}"
           # set the package name
           # note: use 'windows' as OS name instead of 'win32'
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
             export node_pkg="sherif-windows-${node_arch}"
+          elif [ -n "${node_variant}" ]; then
+            export node_pkg="sherif-${node_os}-${node_arch}-${node_variant}"
           else
             export node_pkg="sherif-${node_os}-${node_arch}"
           fi
