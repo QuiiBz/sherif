@@ -35,6 +35,13 @@ function getExePath() {
 function run() {
   const args = process.argv.slice(2)
   const processResult = spawnSync(getExePath(), args, { stdio: 'inherit' })
+
+  if (processResult.error) {
+    console.error(`Failed to execute sherif: ${processResult.error.message}`)
+    console.error("Please report this issue: https://github.com/QuiiBz/sherif/issues")
+    process.exit(1)
+  }
+
   process.exit(processResult.status ?? 0)
 }
 
