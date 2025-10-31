@@ -1,6 +1,6 @@
 {
   "name": "sherif",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Opinionated, zero-config linter for TypeScript & JavaScript monorepos",
   "keywords": [
     "cli",
