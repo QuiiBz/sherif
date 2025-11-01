@@ -22,7 +22,9 @@
   "license": "MIT",
   "optionalDependencies": {
     "sherif-linux-x64": "1.7.1",
+    "sherif-linux-x64-musl": "1.7.1",
     "sherif-linux-arm64": "1.7.1",
+    "sherif-linux-arm64-musl": "1.7.1",
     "sherif-darwin-x64": "1.7.1",
     "sherif-darwin-arm64": "1.7.1",
     "sherif-windows-x64": "1.7.1",
