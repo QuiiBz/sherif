@@ -46,12 +46,33 @@ impl MultipleDependencyVersionsIssue {
             let message = format!("Select the version of {} to use:", self.name.bold());
             let mut versions = sorted_versions
                 .iter()
-                .map(|version| format_version(version, &self.versions, true))
+                .map(|version| {
+                    let packages = self
+                        .versions
+                        .iter()
+                        .filter_map(|(package, curr_version)| match *version == curr_version {
+                            true => {
+                                let path = package.as_str();
+                                match path == "." {
+                                    true => Some("./"),
+                                    false => Some(path),
+                                }
+                            }
+                            false => None,
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ");
+
+                    let formatted_version = format_version(version, &self.versions, true);
+                    format!("{}   {}", formatted_version, packages.bright_black())
+                })
                 .collect::<Vec<_>>();
             versions.dedup();
 
             let autofix_version = Select::new(&message, versions)
                 .with_render_config(get_render_config())
+                .with_vim_mode(true)
+                .without_filtering()
                 .with_help_message("Enter to select, Esc to skip")
                 .prompt_skippable()?;
             let autofix_version = autofix_version.map(|select| {
