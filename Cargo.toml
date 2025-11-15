@@ -23,7 +23,7 @@ colored = "2.0.4"
 detect-indent = "0.1.0"
 detect-newline-style = "0.1.2"
 indexmap = { version = "2.0.0", features = ["serde"] }
-inquire = "0.6.2"
+inquire = "0.9.1"
 semver = "1.0.18"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = { version = "1.0.107", features = ["preserve_order"] }

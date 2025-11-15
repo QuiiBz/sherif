@@ -29,6 +29,8 @@ impl PackageManager {
         let package_manager =
             Select::new("Select a package manager to use", PACKAGE_MANAGERS.to_vec())
                 .with_render_config(get_render_config())
+                .with_vim_mode(true)
+                .without_filtering()
                 .with_help_message("Enter to select")
                 .prompt();
 
