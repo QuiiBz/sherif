@@ -84,7 +84,7 @@ fn main() {
 
     print_footer(total_issues, total_packages, warnings, errors, fixed, now);
 
-    if errors > 0 {
+    if errors > 0 || (args.fail_on_warnings && warnings > 0) {
         std::process::exit(1);
     }
 }

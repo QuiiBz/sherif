@@ -34,6 +34,10 @@ pub struct Args {
     #[arg(long)]
     pub no_install: bool,
 
+    /// Fail with a non-zero exit code if any warnings are found.
+    #[arg(long)]
+    pub fail_on_warnings: bool,
+
     /// Ignore the `multiple-dependency-versions` rule for the given dependency name and/or version.
     #[arg(long, short)]
     pub ignore_dependency: Vec<String>,

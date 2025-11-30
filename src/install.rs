@@ -116,6 +116,7 @@ mod test {
             fix: false,
             select: None,
             no_install: false,
+            fail_on_warnings: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
