@@ -82,7 +82,7 @@ impl Issue for TypesInDependenciesIssue {
     }
 
     fn fix(&mut self, root: &PathBuf, package_type: &PackageType) -> Result<()> {
-        let path = root.join(package_type.to_string());
+        let path = root.join(package_type.as_path());
         let value = fs::read_to_string(&path)?;
         let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
 

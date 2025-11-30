@@ -175,10 +175,10 @@ impl Issue for MultipleDependencyVersionsIssue {
         ))
     }
 
-    fn fix(&mut self, root: &PathBuf, _package_type: &PackageType) -> Result<()> {
+    fn fix(&mut self, _root: &PathBuf, _package_type: &PackageType) -> Result<()> {
         if let Some(autofix_version) = self.get_autofix_version()? {
             for package in self.versions.keys() {
-                let path = root.join(package).join("package.json");
+                let path = PathBuf::from(package).join("package.json");
                 let value = fs::read_to_string(&path)?;
                 let (mut value, indent, lineending) =
                     json::deserialize::<serde_json::Value>(&value)?;

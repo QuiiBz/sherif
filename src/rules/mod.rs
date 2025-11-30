@@ -71,6 +71,16 @@ pub enum PackageType {
     Package(String),
 }
 
+impl PackageType {
+    pub fn as_path(&self) -> String {
+        match self {
+            PackageType::None => String::new(),
+            PackageType::Root => String::from("package.json"),
+            PackageType::Package(name) => format!("{}/package.json", name),
+        }
+    }
+}
+
 impl Display for PackageType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
