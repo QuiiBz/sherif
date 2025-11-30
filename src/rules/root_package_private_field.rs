@@ -45,22 +45,20 @@ impl Issue for RootPackagePrivateFieldIssue {
         Cow::Borrowed("The root package.json should be private to prevent accidentaly publishing it to a registry.")
     }
 
-    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
-        if let PackageType::Root = package_type {
-            let path = PathBuf::from("package.json");
-            let value = fs::read_to_string(&path)?;
-            let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
+    fn fix(&mut self, root: &PathBuf, package_type: &PackageType) -> Result<()> {
+        let path = root.join(package_type.as_path());
+        let value = fs::read_to_string(&path)?;
+        let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
 
-            value
-                .as_object_mut()
-                .unwrap()
-                .insert("private".to_string(), serde_json::Value::Bool(true));
+        value
+            .as_object_mut()
+            .unwrap()
+            .insert("private".to_string(), serde_json::Value::Bool(true));
 
-            let value = json::serialize(&value, indent, lineending)?;
-            fs::write(path, value)?;
+        let value = json::serialize(&value, indent, lineending)?;
+        fs::write(path, value)?;
 
-            self.fixed = true;
-        }
+        self.fixed = true;
 
         Ok(())
     }

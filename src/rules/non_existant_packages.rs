@@ -101,11 +101,11 @@ impl Issue for NonExistantPackagesIssue {
         Cow::Borrowed("All paths defined in the workspace should match at least one package.")
     }
 
-    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
+    fn fix(&mut self, root: &PathBuf, package_type: &PackageType) -> Result<()> {
         if let PackageType::None = package_type {
             match self.pnpm_workspace {
                 true => {
-                    let path = PathBuf::from("pnpm-workspace.yaml");
+                    let path = root.join("pnpm-workspace.yaml");
                     let value = fs::read_to_string(&path)?;
                     let mut value = serde_yaml::from_str::<serde_yaml::Value>(&value)?;
 
@@ -126,7 +126,7 @@ impl Issue for NonExistantPackagesIssue {
                     self.fixed = true;
                 }
                 false => {
-                    let path = PathBuf::from("package.json");
+                    let path = root.join("package.json");
                     let value = fs::read_to_string(&path)?;
                     let (mut value, indent, lineending) =
                         json::deserialize::<serde_json::Value>(&value)?;

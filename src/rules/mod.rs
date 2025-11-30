@@ -4,6 +4,7 @@ use indexmap::IndexMap;
 use std::{
     borrow::Cow,
     fmt::{Debug, Display},
+    path::PathBuf,
 };
 
 pub mod empty_dependencies;
@@ -56,7 +57,7 @@ pub trait Issue {
     fn message(&self) -> String;
     fn why(&self) -> Cow<'static, str>;
 
-    fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
+    fn fix(&mut self, _root: &PathBuf, _package_type: &PackageType) -> Result<()> {
         Ok(())
     }
 }
@@ -68,6 +69,16 @@ pub enum PackageType {
     None,
     Root,
     Package(String),
+}
+
+impl PackageType {
+    pub fn as_path(&self) -> String {
+        match self {
+            PackageType::None => String::new(),
+            PackageType::Root => String::from("package.json"),
+            PackageType::Package(name) => format!("{}/package.json", name),
+        }
+    }
 }
 
 impl Display for PackageType {
@@ -119,10 +130,10 @@ impl<'a> IssuesList<'a> {
             .count()
     }
 
-    pub fn fix(&mut self) -> Result<()> {
+    pub fn fix(&mut self, root: &PathBuf) -> Result<()> {
         for (package_type, issues) in self.issues.iter_mut() {
             for issue in issues {
-                if let Err(error) = issue.fix(package_type) {
+                if let Err(error) = issue.fix(root, package_type) {
                     return Err(anyhow!("Error while fixing {}: {}", package_type, error));
                 }
             }
