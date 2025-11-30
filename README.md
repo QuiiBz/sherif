@@ -104,11 +104,9 @@ If you don't want Sherif to run your packager manager's `install` command after 
 sherif --fix --no-install
 ```
 
-### Exit code
+## Exit code
 
-By default, Sherif will exit with code `1` if any error issue is found. If you only have warning issues or no issues at all, Sherif will exit with code `0`.
-
-You can change this behavior to always exit with code `1` if any issue if found, including warnings, by using the `--fail-on-warnings` option.
+By default, Sherif will exit with code `1` if any error issue is found. If you only have warning issues or no issues at all, Sherif will exit with code `0`. You can change this behavior to always exit with code `1` if any issue if found, including warnings, by using the `--fail-on-warnings` option.
 
 ## Rules
 
