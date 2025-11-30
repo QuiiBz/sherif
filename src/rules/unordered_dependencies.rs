@@ -17,40 +17,6 @@ impl UnorderedDependenciesIssue {
             fixed: false,
         })
     }
-
-    pub fn sort(&mut self, path: PathBuf) -> Result<()> {
-        let value = fs::read_to_string(&path)?;
-        let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
-        let dependency = self.dependency_kind.to_string();
-
-        if let Some(dependency_field) = value.get(&dependency) {
-            if dependency_field.is_object() {
-                let mut keys = dependency_field
-                    .as_object()
-                    .unwrap()
-                    .keys()
-                    .collect::<Vec<_>>();
-                keys.sort();
-
-                let mut sorted = serde_json::Map::new();
-                for key in keys {
-                    sorted.insert(key.to_string(), dependency_field[key].clone());
-                }
-
-                value
-                    .as_object_mut()
-                    .unwrap()
-                    .insert(dependency, serde_json::Value::Object(sorted));
-
-                let value = json::serialize(&value, indent, lineending)?;
-                fs::write(path, value)?;
-
-                self.fixed = true;
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl Issue for UnorderedDependenciesIssue {
@@ -87,13 +53,36 @@ impl Issue for UnorderedDependenciesIssue {
         ))
     }
 
-    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
-        if let PackageType::Package(path) = package_type {
-            let path = PathBuf::from(path).join("package.json");
-            self.sort(path)?;
-        } else if let PackageType::Root = package_type {
-            let path = PathBuf::from("package.json");
-            self.sort(path)?;
+    fn fix(&mut self, root: &PathBuf, package_type: &PackageType) -> Result<()> {
+        let path = root.join(package_type.to_string());
+        let value = fs::read_to_string(&path)?;
+        let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
+        let dependency = self.dependency_kind.to_string();
+
+        if let Some(dependency_field) = value.get(&dependency) {
+            if dependency_field.is_object() {
+                let mut keys = dependency_field
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .collect::<Vec<_>>();
+                keys.sort();
+
+                let mut sorted = serde_json::Map::new();
+                for key in keys {
+                    sorted.insert(key.to_string(), dependency_field[key].clone());
+                }
+
+                value
+                    .as_object_mut()
+                    .unwrap()
+                    .insert(dependency, serde_json::Value::Object(sorted));
+
+                let value = json::serialize(&value, indent, lineending)?;
+                fs::write(path, value)?;
+
+                self.fixed = true;
+            }
         }
 
         Ok(())

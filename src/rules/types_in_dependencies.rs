@@ -81,49 +81,47 @@ impl Issue for TypesInDependenciesIssue {
         Cow::Borrowed("Private packages shouldn't have @types/* in dependencies.")
     }
 
-    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
-        if let PackageType::Package(path) = package_type {
-            let path = PathBuf::from(path).join("package.json");
-            let value = fs::read_to_string(&path)?;
-            let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
+    fn fix(&mut self, root: &PathBuf, package_type: &PackageType) -> Result<()> {
+        let path = root.join(package_type.to_string());
+        let value = fs::read_to_string(&path)?;
+        let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
 
-            let dependencies = value
-                .get_mut("dependencies")
-                .unwrap()
-                .as_object_mut()
-                .unwrap();
-            let mut dependencies_to_add = IndexMap::new();
+        let dependencies = value
+            .get_mut("dependencies")
+            .unwrap()
+            .as_object_mut()
+            .unwrap();
+        let mut dependencies_to_add = IndexMap::new();
 
-            for package in &self.packages {
-                if let Some(version) = dependencies.remove(package) {
-                    dependencies_to_add.insert(package.clone(), version);
-                }
+        for package in &self.packages {
+            if let Some(version) = dependencies.remove(package) {
+                dependencies_to_add.insert(package.clone(), version);
             }
-
-            // The package.json file might not have a devDependencies field.
-            let dev_dependencies = match value.get_mut("devDependencies") {
-                Some(dev_dependencies) => dev_dependencies,
-                None => {
-                    value.as_object_mut().unwrap().insert(
-                        "devDependencies".into(),
-                        serde_json::Value::Object(serde_json::Map::new()),
-                    );
-
-                    value.get_mut("devDependencies").unwrap()
-                }
-            };
-
-            let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
-
-            for (package, version) in dependencies_to_add {
-                dev_dependencies.insert(package, version);
-            }
-
-            let value = json::serialize(&value, indent, lineending)?;
-            fs::write(path, value)?;
-
-            self.fixed = true;
         }
+
+        // The package.json file might not have a devDependencies field.
+        let dev_dependencies = match value.get_mut("devDependencies") {
+            Some(dev_dependencies) => dev_dependencies,
+            None => {
+                value.as_object_mut().unwrap().insert(
+                    "devDependencies".into(),
+                    serde_json::Value::Object(serde_json::Map::new()),
+                );
+
+                value.get_mut("devDependencies").unwrap()
+            }
+        };
+
+        let dev_dependencies = dev_dependencies.as_object_mut().unwrap();
+
+        for (package, version) in dependencies_to_add {
+            dev_dependencies.insert(package, version);
+        }
+
+        let value = json::serialize(&value, indent, lineending)?;
+        fs::write(path, value)?;
+
+        self.fixed = true;
 
         Ok(())
     }

@@ -52,7 +52,7 @@ fn main() {
             println!();
         }
 
-        if let Err(error) = issues.fix() {
+        if let Err(error) = issues.fix(&args.path) {
             print_error("Failed to fix issues", error.to_string().as_str());
             std::process::exit(1);
         }
