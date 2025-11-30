@@ -22,7 +22,7 @@ Sherif is an opinionated, zero-config linter for TypeScript & JavaScript monorep
 
 ## Installation
 
-Run `sherif` in the root of your monorepo to list the found issues. Any error will cause Sherif to exit with a code 1:
+Run `sherif` in the root of your monorepo to list the found issues. Any error will cause Sherif to [exit with a code 1](#exit-code):
 
 ```bash
 # PNPM
@@ -103,6 +103,12 @@ If you don't want Sherif to run your packager manager's `install` command after 
 # Autofix without running the package manager's install command
 sherif --fix --no-install
 ```
+
+### Exit code
+
+By default, Sherif will exit with code `1` if any error issue is found. If you only have warning issues or no issues at all, Sherif will exit with code `0`.
+
+You can change this behavior to always exit with code `1` if any issue if found, including warnings, by using the `--fail-on-warnings` option.
 
 ## Rules
 
