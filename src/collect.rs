@@ -1,7 +1,7 @@
 use crate::args::Args;
 use crate::packages::root::RootPackage;
 use crate::packages::semversion::SemVersion;
-use crate::packages::{Package, PackagesList};
+use crate::packages::{Config, Package, PackagesList};
 use crate::printer::print_error;
 use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::non_existant_packages::NonExistantPackagesIssue;
@@ -226,8 +226,8 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
     })
 }
 
-pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_> {
-    let mut issues = IssuesList::new(&args.ignore_rule);
+pub fn collect_issues(config: &Config, packages_list: PackagesList) -> IssuesList<'_> {
+    let mut issues = IssuesList::new(&config.ignore_rule);
 
     let PackagesList {
         root_package,
@@ -271,7 +271,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
     }
 
     for package in packages {
-        if package.is_ignored(&args.ignore_package) {
+        if package.is_ignored(&config.ignore_package) {
             continue;
         }
 
@@ -334,7 +334,7 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
         let mut filtered_versions = versions
             .iter()
             .filter(|(_, version)| {
-                !args
+                !config
                     .ignore_dependency
                     .contains(&format!("{}@{}", name, version))
             })
@@ -347,8 +347,8 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
                 .collect::<Vec<_>>()
                 .windows(2)
                 .all(|window| window[0] == window[1])
-            && !args.ignore_dependency.contains(&name)
-            && !args.ignore_dependency.iter().any(|dependency| {
+            && !config.ignore_dependency.contains(&name)
+            && !config.ignore_dependency.iter().any(|dependency| {
                 if dependency.ends_with('*') {
                     if dependency.starts_with('*') {
                         return name
@@ -365,7 +365,11 @@ pub fn collect_issues(args: &Args, packages_list: PackagesList) -> IssuesList<'_
 
             issues.add_raw(
                 PackageType::None,
-                MultipleDependencyVersionsIssue::new(name, filtered_versions, args.select.clone()),
+                MultipleDependencyVersionsIssue::new(
+                    name,
+                    filtered_versions,
+                    config.select.clone(),
+                ),
             );
         }
     }
