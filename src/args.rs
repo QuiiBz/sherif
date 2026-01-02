@@ -1,7 +1,8 @@
 use clap::{Parser, ValueEnum};
+use serde::Deserialize;
 use std::{fmt::Display, path::PathBuf};
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum, Deserialize)]
 pub enum AutofixSelect {
     Highest,
     Lowest,
@@ -16,7 +17,7 @@ impl Display for AutofixSelect {
     }
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Deserialize, Clone)]
 pub struct Args {
     /// Path to the monorepo root.
     #[arg(default_value = ".")]

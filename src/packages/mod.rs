@@ -1,8 +1,11 @@
 use self::semversion::SemVersion;
-use crate::rules::{
-    empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
-    unordered_dependencies::UnorderedDependenciesIssue,
-    BoxIssue,
+use crate::{
+    args::AutofixSelect,
+    rules::{
+        empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
+        unordered_dependencies::UnorderedDependenciesIssue,
+        BoxIssue,
+    },
 };
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
@@ -29,20 +32,30 @@ pub enum Workspaces {
     },
 }
 
+#[derive(Deserialize, Debug, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Config {
+    pub fix: Option<bool>,
+    pub select: Option<AutofixSelect>,
+    pub no_install: Option<bool>,
+    pub fail_on_warnings: Option<bool>,
+    pub ignore_dependency: Option<Vec<String>>,
+    pub ignore_package: Option<Vec<String>>,
+    pub ignore_rule: Option<Vec<String>>,
+}
+
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct PackageInner {
     name: Option<String>,
     private: Option<bool>,
     workspaces: Option<Workspaces>,
-    #[serde(rename = "packageManager")]
     package_manager: Option<String>,
     dependencies: Option<IndexMap<String, String>>,
-    #[serde(rename = "devDependencies")]
     dev_dependencies: Option<IndexMap<String, String>>,
-    #[serde(rename = "peerDependencies")]
     peer_dependencies: Option<IndexMap<String, String>>,
-    #[serde(rename = "optionalDependencies")]
     optional_dependencies: Option<IndexMap<String, String>>,
+    sherif: Option<Config>,
 }
 
 #[derive(Debug)]

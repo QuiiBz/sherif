@@ -1,3 +1,4 @@
+use crate::packages::Config;
 use crate::printer::print_success;
 use crate::rules::IssueLevel;
 use crate::{args::Args, printer::print_error};
@@ -40,11 +41,41 @@ fn main() {
         }
     };
 
-    let total_packages = packages_list.packages.len();
-    let mut issues = collect_issues(&args, packages_list);
+    let mut config = packages_list.root_package.get_config().unwrap_or_default();
 
     if args.fix {
-        if let Some(autofix_select) = &args.select {
+        config.fix = Some(true);
+    }
+
+    if args.no_install {
+        config.no_install = Some(true);
+    }
+
+    if let Some(select) = args.select {
+        config.select = Some(select);
+    }
+
+    if args.fail_on_warnings {
+        config.fail_on_warnings = Some(true);
+    }
+
+    if args.ignore_dependency.len() > 0 {
+        config.ignore_dependency = Some(args.ignore_dependency);
+    }
+
+    if args.ignore_package.len() > 0 {
+        config.ignore_package = Some(args.ignore_package);
+    }
+
+    if args.ignore_rule.len() > 0 {
+        config.ignore_rule = Some(args.ignore_rule);
+    }
+
+    let total_packages = packages_list.packages.len();
+    let mut issues = collect_issues(&config, packages_list);
+
+    if args.fix {
+        if let Some(autofix_select) = &config.select {
             println!(
                 " {}",
                 format!("Note: automatically selecting {} dependencies for `multiple-dependency-versions` rule...", autofix_select).bright_black(),
