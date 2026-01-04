@@ -1,4 +1,3 @@
-use crate::packages::Config;
 use crate::printer::print_success;
 use crate::rules::IssueLevel;
 use crate::{args::Args, printer::print_error};
@@ -44,11 +43,11 @@ fn main() {
     let mut config = packages_list.root_package.get_config().unwrap_or_default();
 
     if args.fix {
-        config.fix = Some(true);
+        config.fix = true;
     }
 
     if args.no_install {
-        config.no_install = Some(true);
+        config.no_install = true;
     }
 
     if let Some(select) = args.select {
@@ -56,19 +55,19 @@ fn main() {
     }
 
     if args.fail_on_warnings {
-        config.fail_on_warnings = Some(true);
+        config.fail_on_warnings = true;
     }
 
-    if args.ignore_dependency.len() > 0 {
-        config.ignore_dependency = Some(args.ignore_dependency);
+    if !args.ignore_dependency.is_empty() {
+        config.ignore_dependency = args.ignore_dependency;
     }
 
-    if args.ignore_package.len() > 0 {
-        config.ignore_package = Some(args.ignore_package);
+    if !args.ignore_package.is_empty() {
+        config.ignore_package = args.ignore_package;
     }
 
-    if args.ignore_rule.len() > 0 {
-        config.ignore_rule = Some(args.ignore_rule);
+    if !args.ignore_rule.is_empty() {
+        config.ignore_rule = args.ignore_rule;
     }
 
     let total_packages = packages_list.packages.len();

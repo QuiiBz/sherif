@@ -1,3 +1,5 @@
+#[cfg(test)]
+use crate::packages::Config;
 use clap::{Parser, ValueEnum};
 use serde::Deserialize;
 use std::{fmt::Display, path::PathBuf};
@@ -50,4 +52,19 @@ pub struct Args {
     /// Ignore the given rule.
     #[arg(long, short = 'r')]
     pub ignore_rule: Vec<String>,
+}
+
+#[cfg(test)]
+impl From<Args> for Config {
+    fn from(val: Args) -> Self {
+        Config {
+            fix: val.fix,
+            select: val.select,
+            no_install: val.no_install,
+            fail_on_warnings: val.fail_on_warnings,
+            ignore_dependency: val.ignore_dependency,
+            ignore_package: val.ignore_package,
+            ignore_rule: val.ignore_rule,
+        }
+    }
 }

@@ -623,9 +623,10 @@ mod test {
         };
 
         let packages_list = collect_packages(&args).unwrap();
+        let config = args.into();
         assert_eq!(packages_list.root_package.get_name(), "root-issues");
 
-        let issues = collect_issues(&args, packages_list);
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 4);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
@@ -663,7 +664,8 @@ mod test {
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "root-issues-fixed");
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 0);
     }
 
@@ -683,7 +685,8 @@ mod test {
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 4);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
@@ -722,7 +725,8 @@ mod test {
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 1);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
@@ -749,7 +753,8 @@ mod test {
         let packages_list = collect_packages(&args).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies-star");
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 2);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
@@ -783,7 +788,8 @@ mod test {
             "dependencies-nested-star"
         );
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 2);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
@@ -815,7 +821,8 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "pnpm-glob");
         assert_eq!(packages_list.packages.len(), 2);
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 0);
     }
 
@@ -836,7 +843,8 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "unordered");
         assert_eq!(packages_list.packages.len(), 1);
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 2);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();
@@ -871,7 +879,8 @@ mod test {
         assert_eq!(packages_list.root_package.get_name(), "unsync");
         assert_eq!(packages_list.packages.len(), 2);
 
-        let issues = collect_issues(&args, packages_list);
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 2);
 
         let issues = issues.into_iter().collect::<IndexMap<_, _>>();

@@ -33,15 +33,15 @@ pub enum Workspaces {
 }
 
 #[derive(Deserialize, Debug, Clone, Default)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct Config {
-    pub fix: Option<bool>,
+    pub fix: bool,
     pub select: Option<AutofixSelect>,
-    pub no_install: Option<bool>,
-    pub fail_on_warnings: Option<bool>,
-    pub ignore_dependency: Option<Vec<String>>,
-    pub ignore_package: Option<Vec<String>>,
-    pub ignore_rule: Option<Vec<String>>,
+    pub no_install: bool,
+    pub fail_on_warnings: bool,
+    pub ignore_dependency: Vec<String>,
+    pub ignore_package: Vec<String>,
+    pub ignore_rule: Vec<String>,
 }
 
 #[derive(Deserialize, Debug)]
