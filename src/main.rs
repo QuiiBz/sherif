@@ -32,7 +32,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    let packages_list = match collect_packages(&args) {
+    let packages_list = match collect_packages(&args.path) {
         Ok(result) => result,
         Err(error) => {
             print_error("Failed to collect packages", error.to_string().as_str());
@@ -41,39 +41,12 @@ fn main() {
     };
 
     let mut config = packages_list.root_package.get_config().unwrap_or_default();
-
-    if args.fix {
-        config.fix = true;
-    }
-
-    if args.no_install {
-        config.no_install = true;
-    }
-
-    if let Some(select) = args.select {
-        config.select = Some(select);
-    }
-
-    if args.fail_on_warnings {
-        config.fail_on_warnings = true;
-    }
-
-    if !args.ignore_dependency.is_empty() {
-        config.ignore_dependency = args.ignore_dependency;
-    }
-
-    if !args.ignore_package.is_empty() {
-        config.ignore_package = args.ignore_package;
-    }
-
-    if !args.ignore_rule.is_empty() {
-        config.ignore_rule = args.ignore_rule;
-    }
+    config.merge(args);
 
     let total_packages = packages_list.packages.len();
     let mut issues = collect_issues(&config, packages_list);
 
-    if args.fix {
+    if config.fix {
         if let Some(autofix_select) = &config.select {
             println!(
                 " {}",
@@ -100,7 +73,7 @@ fn main() {
     let fixed = issues.len_by_level(IssueLevel::Fixed);
 
     // Only run the install command if we allow it and we fixed some issues.
-    if args.fix && !args.no_install && fixed > 0 {
+    if config.fix && !config.no_install && fixed > 0 {
         if let Err(error) = install::install() {
             print_error("Failed to install packages", error.to_string().as_str());
             std::process::exit(1);
@@ -114,7 +87,7 @@ fn main() {
 
     print_footer(total_issues, total_packages, warnings, errors, fixed, now);
 
-    if errors > 0 || (args.fail_on_warnings && warnings > 0) {
+    if errors > 0 || (config.fail_on_warnings && warnings > 0) {
         std::process::exit(1);
     }
 }

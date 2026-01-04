@@ -1,6 +1,6 @@
 use self::semversion::SemVersion;
 use crate::{
-    args::AutofixSelect,
+    args::{Args, AutofixSelect},
     rules::{
         empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
         unordered_dependencies::UnorderedDependenciesIssue,
@@ -42,6 +42,38 @@ pub struct Config {
     pub ignore_dependency: Vec<String>,
     pub ignore_package: Vec<String>,
     pub ignore_rule: Vec<String>,
+}
+
+impl Config {
+    pub fn merge(&mut self, args: Args) {
+        if args.fix {
+            self.fix = true;
+        }
+
+        if args.no_install {
+            self.no_install = true;
+        }
+
+        if let Some(select) = args.select {
+            self.select = Some(select);
+        }
+
+        if args.fail_on_warnings {
+            self.fail_on_warnings = true;
+        }
+
+        if !args.ignore_dependency.is_empty() {
+            self.ignore_dependency = args.ignore_dependency;
+        }
+
+        if !args.ignore_package.is_empty() {
+            self.ignore_package = args.ignore_package;
+        }
+
+        if !args.ignore_rule.is_empty() {
+            self.ignore_rule = args.ignore_rule;
+        }
+    }
 }
 
 #[derive(Deserialize, Debug)]

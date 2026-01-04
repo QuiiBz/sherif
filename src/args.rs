@@ -56,15 +56,15 @@ pub struct Args {
 
 #[cfg(test)]
 impl From<Args> for Config {
-    fn from(val: Args) -> Self {
+    fn from(args: Args) -> Self {
         Config {
-            fix: val.fix,
-            select: val.select,
-            no_install: val.no_install,
-            fail_on_warnings: val.fail_on_warnings,
-            ignore_dependency: val.ignore_dependency,
-            ignore_package: val.ignore_package,
-            ignore_rule: val.ignore_rule,
+            fix: args.fix,
+            select: args.select,
+            no_install: args.no_install,
+            fail_on_warnings: args.fail_on_warnings,
+            ignore_dependency: args.ignore_dependency,
+            ignore_package: args.ignore_package,
+            ignore_rule: args.ignore_rule,
         }
     }
 }

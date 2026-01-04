@@ -1,4 +1,3 @@
-use crate::args::Args;
 use crate::packages::root::RootPackage;
 use crate::packages::semversion::SemVersion;
 use crate::packages::{Config, Package, PackagesList};
@@ -15,7 +14,7 @@ use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::fs::{self};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 const PNPM_WORKSPACE: &str = "pnpm-workspace.yaml";
 
@@ -24,8 +23,8 @@ pub struct PnpmWorkspace {
     pub packages: Vec<String>,
 }
 
-pub fn collect_packages(args: &Args) -> Result<PackagesList> {
-    let root_package = RootPackage::new(&args.path)?;
+pub fn collect_packages(root: &Path) -> Result<PackagesList> {
+    let root_package = RootPackage::new(root)?;
     let mut packages = Vec::new();
     let mut packages_list = root_package.get_workspaces();
     let mut excluded_paths = Vec::new();
@@ -33,12 +32,12 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
     let mut is_pnpm_workspace = false;
 
     if packages_list.is_none() {
-        let pnpm_workspace = args.path.join(PNPM_WORKSPACE);
+        let pnpm_workspace = root.join(PNPM_WORKSPACE);
 
         if !pnpm_workspace.is_file() {
             return Err(anyhow!(
                     "No `workspaces` field in the root `package.json`, or `pnpm-workspace.yaml` file not found in {:?}",
-                    args.path
+                    root
                 ));
         }
 
@@ -86,12 +85,12 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                             .trim_start_matches('!')
                             .trim_end_matches('*')
                             .trim_end_matches('/');
-                        let directory = args.path.join(directory);
+                        let directory = root.join(directory);
 
                         excluded_paths.push(directory.to_string_lossy().to_string());
                     } else {
                         let directory = package.trim_start_matches('!');
-                        let directory = args.path.join(directory);
+                        let directory = root.join(directory);
 
                         excluded_paths.push(directory.to_string_lossy().to_string());
                     }
@@ -107,7 +106,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
 
         for package in packages {
             if let Some((directory, subdirectory)) = package.split_once("/**/") {
-                let directory = args.path.join(directory);
+                let directory = root.join(directory);
 
                 match directory.read_dir() {
                     Ok(expanded_folders) => {
@@ -118,7 +117,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                                 let path = expanded_folder
                                     .to_string_lossy()
                                     .to_string()
-                                    .replace(&(args.path.to_string_lossy().to_string() + "/"), "")
+                                    .replace(&(root.to_string_lossy().to_string() + "/"), "")
                                     + "/"
                                     + subdirectory;
 
@@ -143,7 +142,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                 let packages = match directory_match.ends_with('/') {
                     true => {
                         let directory = directory_match.trim_end_matches('/');
-                        let directory = args.path.join(directory);
+                        let directory = root.join(directory);
 
                         match directory.read_dir() {
                             Ok(packages) => packages.into_iter().collect::<Result<Vec<_>, _>>()?,
@@ -154,7 +153,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                         }
                     }
                     false => {
-                        let directory = args.path.join(directory_match);
+                        let directory = root.join(directory_match);
                         let directory = directory.parent().unwrap().to_path_buf();
 
                         match directory.read_dir() {
@@ -201,7 +200,7 @@ pub fn collect_packages(args: &Args) -> Result<PackagesList> {
                     }
                 }
             } else {
-                let path = args.path.join(package);
+                let path = root.join(package);
 
                 match path.is_dir() {
                     true => add_package(&mut packages_issues, path),
@@ -391,22 +390,13 @@ pub fn collect_issues(config: &Config, packages_list: PackagesList) -> IssuesLis
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::args::Args;
     use debugless_unwrap::DebuglessUnwrapErr;
 
     #[test]
     fn collect_packages_unknown_dir() {
-        let args = Args {
-            path: "unknown".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("unknown");
+        let result = collect_packages(root);
 
         assert!(result.is_err());
         assert_eq!(
@@ -417,18 +407,8 @@ mod test {
 
     #[test]
     fn collect_packages_empty_dir() {
-        let args = Args {
-            path: "fixtures/empty".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/empty");
+        let result = collect_packages(root);
 
         assert!(result.is_err());
         assert_eq!(
@@ -439,18 +419,8 @@ mod test {
 
     #[test]
     fn collect_packages_basic() {
-        let args = Args {
-            path: "fixtures/basic".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/basic");
+        let result = collect_packages(root);
 
         assert!(result.is_ok());
         let PackagesList {
@@ -467,18 +437,8 @@ mod test {
 
     #[test]
     fn collect_packages_pnpm() {
-        let args = Args {
-            path: "fixtures/pnpm".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/pnpm");
+        let result = collect_packages(root);
 
         assert!(result.is_ok());
         let PackagesList {
@@ -495,18 +455,8 @@ mod test {
 
     #[test]
     fn collect_packages_yarn_nohoist() {
-        let args = Args {
-            path: "fixtures/yarn-nohoist".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/yarn-nohoist");
+        let result = collect_packages(root);
 
         assert!(result.is_ok());
         let PackagesList {
@@ -523,18 +473,8 @@ mod test {
 
     #[test]
     fn collect_packages_no_workspace_pnpm() {
-        let args = Args {
-            path: "fixtures/no-workspace-pnpm".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/no-workspace-pnpm");
+        let result = collect_packages(root);
 
         assert!(result.is_err());
         assert_eq!(
@@ -545,18 +485,8 @@ mod test {
 
     #[test]
     fn collect_packages_without_package_json() {
-        let args = Args {
-            path: "fixtures/without-package-json".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/without-package-json");
+        let result = collect_packages(root);
 
         assert!(result.is_ok());
         let PackagesList {
@@ -574,18 +504,8 @@ mod test {
 
     #[test]
     fn collect_packages_ignore_paths() {
-        let args = Args {
-            path: "fixtures/ignore-paths".into(),
-            fix: false,
-            select: None,
-            no_install: true,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let result = collect_packages(&args);
+        let root = Path::new("fixtures/ignore-paths");
+        let result = collect_packages(root);
 
         assert!(result.is_ok());
         let PackagesList {
@@ -622,7 +542,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         let config = args.into();
         assert_eq!(packages_list.root_package.get_name(), "root-issues");
 
@@ -661,7 +581,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "root-issues-fixed");
 
         let config = args.into();
@@ -682,7 +602,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
         let config = args.into();
@@ -722,7 +642,7 @@ mod test {
             ignore_dependency: vec!["next@4.5.6".to_string(), "*eslint*".to_string()],
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies");
 
         let config = args.into();
@@ -750,7 +670,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "dependencies-star");
 
         let config = args.into();
@@ -782,7 +702,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(
             packages_list.root_package.get_name(),
             "dependencies-nested-star"
@@ -817,7 +737,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "pnpm-glob");
         assert_eq!(packages_list.packages.len(), 2);
 
@@ -839,7 +759,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "unordered");
         assert_eq!(packages_list.packages.len(), 1);
 
@@ -875,7 +795,7 @@ mod test {
             ignore_dependency: Vec::new(),
         };
 
-        let packages_list = collect_packages(&args).unwrap();
+        let packages_list = collect_packages(&args.path).unwrap();
         assert_eq!(packages_list.root_package.get_name(), "unsync");
         assert_eq!(packages_list.packages.len(), 2);
 
