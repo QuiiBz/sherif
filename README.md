@@ -22,7 +22,7 @@ Sherif is an opinionated, zero-config linter for TypeScript & JavaScript monorep
 
 ## Installation
 
-Run `sherif` in the root of your monorepo to list the found issues. Any error will cause Sherif to [exit with a code 1](#exit-code):
+Run `sherif` in the root of your monorepo to list the found issues. By default, any error will cause Sherif to [exit with a code 1](#exit-code):
 
 ```bash
 # PNPM
@@ -194,6 +194,26 @@ Private packages shouldn't have `@types/*` in `dependencies`, since they don't n
 #### `unordered-dependencies` ❌
 
 Dependencies should be ordered alphabetically to prevent complex diffs when installing a new dependency via a package manager.
+
+## Configuration
+
+When using a lot of CLI arguments, it might be easier to move to the configuration format. In your root `package.json`, add a `sherif` field containing the same options as the CLI, but in camelCase. Default values are shown below:
+
+```jsonc
+{
+  "sherif": {
+    "fix": false,
+    "select": "highest", // "highest" | "lowest"
+    "noInstall": false,
+    "failOnWarnings": false,
+    "ignoreDependency": [], // string[]
+    "ignorePackage": [], // string[]
+    "ignoreRule": [] // string[]
+  }
+}
+```
+
+When using both the configuration in the root `package.json` and CLI arguments, the CLI arguments will take precedence.
 
 ## Credits
 

@@ -1,8 +1,11 @@
 use self::semversion::SemVersion;
-use crate::rules::{
-    empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
-    unordered_dependencies::UnorderedDependenciesIssue,
-    BoxIssue,
+use crate::{
+    args::{Args, AutofixSelect},
+    rules::{
+        empty_dependencies::{DependencyKind, EmptyDependenciesIssue},
+        unordered_dependencies::UnorderedDependenciesIssue,
+        BoxIssue,
+    },
 };
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
@@ -29,20 +32,62 @@ pub enum Workspaces {
     },
 }
 
+#[derive(Deserialize, Debug, Clone, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Config {
+    pub fix: bool,
+    pub select: Option<AutofixSelect>,
+    pub no_install: bool,
+    pub fail_on_warnings: bool,
+    pub ignore_dependency: Vec<String>,
+    pub ignore_package: Vec<String>,
+    pub ignore_rule: Vec<String>,
+}
+
+impl Config {
+    pub fn merge(&mut self, args: Args) {
+        if args.fix {
+            self.fix = true;
+        }
+
+        if args.no_install {
+            self.no_install = true;
+        }
+
+        if let Some(select) = args.select {
+            self.select = Some(select);
+        }
+
+        if args.fail_on_warnings {
+            self.fail_on_warnings = true;
+        }
+
+        if !args.ignore_dependency.is_empty() {
+            self.ignore_dependency.extend(args.ignore_dependency);
+        }
+
+        if !args.ignore_package.is_empty() {
+            self.ignore_package.extend(args.ignore_package);
+        }
+
+        if !args.ignore_rule.is_empty() {
+            self.ignore_rule.extend(args.ignore_rule);
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct PackageInner {
     name: Option<String>,
     private: Option<bool>,
     workspaces: Option<Workspaces>,
-    #[serde(rename = "packageManager")]
     package_manager: Option<String>,
     dependencies: Option<IndexMap<String, String>>,
-    #[serde(rename = "devDependencies")]
     dev_dependencies: Option<IndexMap<String, String>>,
-    #[serde(rename = "peerDependencies")]
     peer_dependencies: Option<IndexMap<String, String>>,
-    #[serde(rename = "optionalDependencies")]
     optional_dependencies: Option<IndexMap<String, String>>,
+    sherif: Option<Config>,
 }
 
 #[derive(Debug)]

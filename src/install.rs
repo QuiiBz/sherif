@@ -81,9 +81,9 @@ pub fn install() -> Result<()> {
 
 #[cfg(test)]
 mod test {
-    use crate::{args::Args, collect::collect_packages};
+    use crate::collect::collect_packages;
     use serde_json::Value;
-    use std::fs;
+    use std::{fs, path::Path};
 
     #[test]
     fn test_detect_package_manager() {
@@ -111,18 +111,8 @@ mod test {
 
     #[test]
     fn test_install_run() {
-        let args = Args {
-            path: "fixtures/install".into(),
-            fix: false,
-            select: None,
-            no_install: false,
-            fail_on_warnings: false,
-            ignore_rule: Vec::new(),
-            ignore_package: Vec::new(),
-            ignore_dependency: Vec::new(),
-        };
-
-        let _ = collect_packages(&args);
+        let root = Path::new("fixtures/install");
+        let _ = collect_packages(root);
 
         std::env::set_current_dir("fixtures/install").unwrap();
         super::install().unwrap();
