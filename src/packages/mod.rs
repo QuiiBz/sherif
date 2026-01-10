@@ -63,15 +63,15 @@ impl Config {
         }
 
         if !args.ignore_dependency.is_empty() {
-            self.ignore_dependency = args.ignore_dependency;
+            self.ignore_dependency.extend(args.ignore_dependency);
         }
 
         if !args.ignore_package.is_empty() {
-            self.ignore_package = args.ignore_package;
+            self.ignore_package.extend(args.ignore_package);
         }
 
         if !args.ignore_rule.is_empty() {
-            self.ignore_rule = args.ignore_rule;
+            self.ignore_rule.extend(args.ignore_rule);
         }
     }
 }
