@@ -61,14 +61,14 @@ jobs:
             }
           - {
               NAME: darwin-x64,
-              OS: macos-13,
+              OS: macos-15,
               TOOLCHAIN: stable,
               TARGET: x86_64-apple-darwin,
               BIN: sherif
             }
           - {
               NAME: darwin-arm64,
-              OS: macos-13,
+              OS: macos-15,
               TOOLCHAIN: stable,
               TARGET: aarch64-apple-darwin,
               BIN: sherif
