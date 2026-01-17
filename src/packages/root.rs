@@ -1,8 +1,11 @@
 use super::{semversion::SemVersion, Package, Workspaces};
-use crate::rules::{
-    root_package_dependencies::RootPackageDependenciesIssue,
-    root_package_manager_field::RootPackageManagerFieldIssue,
-    root_package_private_field::RootPackagePrivateFieldIssue, BoxIssue,
+use crate::{
+    packages::Config,
+    rules::{
+        root_package_dependencies::RootPackageDependenciesIssue,
+        root_package_manager_field::RootPackageManagerFieldIssue,
+        root_package_private_field::RootPackagePrivateFieldIssue, BoxIssue,
+    },
 };
 use anyhow::Result;
 use indexmap::IndexMap;
@@ -76,5 +79,9 @@ impl RootPackage {
 
     pub fn get_dev_dependencies(&self) -> Option<IndexMap<String, SemVersion>> {
         self.0.get_dev_dependencies()
+    }
+
+    pub fn get_config(&self) -> Option<Config> {
+        self.0.inner.sherif.clone()
     }
 }

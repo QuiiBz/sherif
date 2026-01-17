@@ -1,7 +1,11 @@
+#[cfg(test)]
+use crate::packages::Config;
 use clap::{Parser, ValueEnum};
+use serde::Deserialize;
 use std::{fmt::Display, path::PathBuf};
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum AutofixSelect {
     Highest,
     Lowest,
@@ -16,7 +20,7 @@ impl Display for AutofixSelect {
     }
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Deserialize, Clone)]
 pub struct Args {
     /// Path to the monorepo root.
     #[arg(default_value = ".")]
@@ -49,4 +53,19 @@ pub struct Args {
     /// Ignore the given rule.
     #[arg(long, short = 'r')]
     pub ignore_rule: Vec<String>,
+}
+
+#[cfg(test)]
+impl From<Args> for Config {
+    fn from(args: Args) -> Self {
+        Config {
+            fix: args.fix,
+            select: args.select,
+            no_install: args.no_install,
+            fail_on_warnings: args.fail_on_warnings,
+            ignore_dependency: args.ignore_dependency,
+            ignore_package: args.ignore_package,
+            ignore_rule: args.ignore_rule,
+        }
+    }
 }
