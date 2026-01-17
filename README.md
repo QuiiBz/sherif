@@ -197,7 +197,7 @@ Dependencies should be ordered alphabetically to prevent complex diffs when inst
 
 ## Configuration
 
-When using a lot of CLI arguments, it might be easier to move to the configuration format. In your root `package.json`, add a `sherif` field containing the same options as the CLI, but in camelCase. Default values are shown below:
+When using many CLI arguments, it might be easier to move to the configuration format. In your root `package.json`, add a `sherif` field containing the same options as the CLI, but in camelCase. Default values are shown below:
 
 ```jsonc
 {
