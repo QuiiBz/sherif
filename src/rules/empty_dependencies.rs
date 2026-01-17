@@ -68,23 +68,20 @@ impl Issue for EmptyDependenciesIssue {
         Cow::Borrowed("package.json should not have empty dependencies fields.")
     }
 
-    fn fix(&mut self, package_type: &PackageType) -> Result<()> {
-        if let PackageType::Package(path) = package_type {
-            let path = PathBuf::from(path).join("package.json");
-            let value = fs::read_to_string(&path)?;
-            let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
-            let dependency = self.dependency_kind.to_string();
+    fn fix(&mut self, root: &PathBuf, package_type: &PackageType) -> Result<()> {
+        let path = root.join(package_type.as_path());
+        let value = fs::read_to_string(&path)?;
+        let (mut value, indent, lineending) = json::deserialize::<serde_json::Value>(&value)?;
+        let dependency = self.dependency_kind.to_string();
 
-            if let Some(dependency_field) = value.get(&dependency) {
-                if dependency_field.is_object() && dependency_field.as_object().unwrap().is_empty()
-                {
-                    value.as_object_mut().unwrap().remove(&dependency);
+        if let Some(dependency_field) = value.get(&dependency) {
+            if dependency_field.is_object() && dependency_field.as_object().unwrap().is_empty() {
+                value.as_object_mut().unwrap().remove(&dependency);
 
-                    let value = json::serialize(&value, indent, lineending)?;
-                    fs::write(path, value)?;
+                let value = json::serialize(&value, indent, lineending)?;
+                fs::write(path, value)?;
 
-                    self.fixed = true;
-                }
+                self.fixed = true;
             }
         }
 

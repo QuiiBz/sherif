@@ -255,10 +255,6 @@ impl Issue for UnsyncSimilarDependenciesIssue {
             self.r#type
         ))
     }
-
-    fn fix(&mut self, _package_type: &super::PackageType) -> anyhow::Result<()> {
-        Ok(())
-    }
 }
 
 #[cfg(test)]

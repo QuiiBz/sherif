@@ -37,8 +37,8 @@ impl Issue for PackagesWithoutPackageJsonIssue {
         Cow::Borrowed("All packages matching the workspace should have a package.json file.")
     }
 
-    fn fix(&mut self, _package_type: &PackageType) -> Result<()> {
-        let path = PathBuf::from(&self.package).join("package.json");
+    fn fix(&mut self, root: &PathBuf, _package_type: &PackageType) -> Result<()> {
+        let path = root.join(&self.package).join("package.json");
         let package_name = path
             .parent()
             .unwrap()
