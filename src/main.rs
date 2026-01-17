@@ -24,14 +24,6 @@ fn main() {
     let now = Instant::now();
     let args = Args::parse();
 
-    if args.fix && is_ci() {
-        print_error(
-            "Failed to fix issues",
-            "Cannot fix issues inside a CI environment",
-        );
-        std::process::exit(1);
-    }
-
     let packages_list = match collect_packages(&args.path) {
         Ok(result) => result,
         Err(error) => {
@@ -42,6 +34,14 @@ fn main() {
 
     let mut config = packages_list.root_package.get_config().unwrap_or_default();
     config.merge(args);
+
+    if config.fix && is_ci() {
+        print_error(
+            "Failed to fix issues",
+            "Cannot fix issues inside a CI environment",
+        );
+        std::process::exit(1);
+    }
 
     let total_packages = packages_list.packages.len();
     let mut issues = collect_issues(&config, packages_list);
