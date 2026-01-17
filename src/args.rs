@@ -5,6 +5,7 @@ use serde::Deserialize;
 use std::{fmt::Display, path::PathBuf};
 
 #[derive(Debug, Clone, ValueEnum, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum AutofixSelect {
     Highest,
     Lowest,
