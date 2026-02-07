@@ -1,7 +1,7 @@
 {
   "name": "dependencies-nested-star",
   "workspaces": [
-    "packages/**/*",
+    "packages/*/*",
     "packages/docs"
   ],
   "private": true,
