@@ -105,7 +105,32 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
         let mut expanded_packages = Vec::new();
 
         for package in packages {
-            if let Some((directory, subdirectory)) = package.split_once("/**/") {
+            if let Some((directory, subdirectory)) = package.split_once("/*/") {
+                let directory = root.join(directory);
+
+                match directory.read_dir() {
+                    Ok(expanded_folders) => {
+                        for expanded_folder in expanded_folders.flatten() {
+                            let expanded_folder = expanded_folder.path();
+
+                            if expanded_folder.is_dir() {
+                                let path = expanded_folder
+                                    .to_string_lossy()
+                                    .to_string()
+                                    .replace(&(root.to_string_lossy().to_string() + "/"), "")
+                                    + "/"
+                                    + subdirectory;
+
+                                expanded_packages.push(path);
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        non_existant_paths.push(package.to_string());
+                        continue;
+                    }
+                }
+            } else if let Some((directory, subdirectory)) = package.split_once("/**/") {
                 let directory = root.join(directory);
 
                 match directory.read_dir() {
