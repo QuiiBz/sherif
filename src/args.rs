@@ -21,6 +21,7 @@ impl Display for AutofixSelect {
 }
 
 #[derive(Debug, Parser, Deserialize, Clone)]
+#[command(version)]
 pub struct Args {
     /// Path to the monorepo root.
     #[arg(default_value = ".")]
