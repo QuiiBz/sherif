@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  id-token: write
+  contents: read
 
 jobs:
   publish-npm-binaries:
@@ -98,7 +99,7 @@ jobs:
       - name: Install node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
 
       - name: Publish to NPM
@@ -133,8 +134,6 @@ jobs:
           # publish the package
           cd "${node_pkg}"
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -153,7 +152,7 @@ jobs:
       - name: Install node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
 
       - name: Publish the package
@@ -162,5 +161,3 @@ jobs:
           cd npm/app
           cp ../../README.md .
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
