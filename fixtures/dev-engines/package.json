@@ -1,0 +1,11 @@
+{
+  "name": "dev-engines",
+  "workspaces": [],
+  "private": true,
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "9.0.0"
+    }
+  }
+}

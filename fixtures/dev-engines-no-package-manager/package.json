@@ -1,0 +1,11 @@
+{
+  "name": "dev-engines-no-package-manager",
+  "workspaces": [],
+  "private": true,
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">= 20.0.0"
+    }
+  }
+}

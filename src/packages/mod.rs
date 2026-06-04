@@ -77,12 +77,33 @@ impl Config {
 }
 
 #[derive(Deserialize, Debug)]
+struct DevEngineDependency {
+    #[allow(dead_code)]
+    name: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+#[allow(dead_code)]
+enum DevEngineField {
+    Single(DevEngineDependency),
+    Multiple(Vec<DevEngineDependency>),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DevEngines {
+    package_manager: Option<DevEngineField>,
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct PackageInner {
     name: Option<String>,
     private: Option<bool>,
     workspaces: Option<Workspaces>,
     package_manager: Option<String>,
+    dev_engines: Option<DevEngines>,
     dependencies: Option<IndexMap<String, String>>,
     dev_dependencies: Option<IndexMap<String, String>>,
     peer_dependencies: Option<IndexMap<String, String>>,
@@ -130,6 +151,17 @@ impl Package {
 
     pub fn is_private(&self) -> bool {
         self.inner.private.unwrap_or(false)
+    }
+
+    pub fn has_package_manager(&self) -> bool {
+        if self.inner.package_manager.is_some() {
+            return true;
+        }
+
+        match &self.inner.dev_engines {
+            Some(dev_engines) => dev_engines.package_manager.is_some(),
+            None => false,
+        }
     }
 
     fn check_deps(
