@@ -27,12 +27,14 @@ impl NonExistantPackagesIssue {
             .packages_list
             .iter()
             .map(|package| match self.paths.contains(package) {
-                true => format!(
-                    "  {}  - '{}'   {}",
-                    "-".red(),
-                    package.white(),
-                    "← but this one doesn't match any package".red(),
-                ),
+                true => {
+                    format!(
+                        "  {}  - '{}'   {}",
+                        "-".red(),
+                        package.white(),
+                        "← but this one doesn't match any package".red(),
+                    )
+                }
                 false => format!("  │  - '{}'", package),
             })
             .collect::<Vec<String>>()
@@ -131,26 +133,51 @@ impl Issue for NonExistantPackagesIssue {
                     let (mut value, indent, lineending) =
                         json::deserialize::<serde_json::Value>(&value)?;
 
-                    value
-                        .get_mut("workspaces")
-                        .unwrap()
-                        .as_array_mut()
-                        .unwrap()
-                        .retain(|package| {
-                            let package = package.as_str().unwrap().to_string();
+                    let workspaces = value.get_mut("workspaces").unwrap();
 
-                            !self.paths.contains(&package)
-                        });
+                    // Leave the issue unfixed (so it is still reported) when the
+                    // `workspaces` field has an unexpected shape we can't edit.
+                    if retain_existing_workspace_paths(workspaces, &self.paths) {
+                        let value = json::serialize(&value, indent, lineending)?;
+                        fs::write(path, value)?;
 
-                    let value = json::serialize(&value, indent, lineending)?;
-                    fs::write(path, value)?;
-
-                    self.fixed = true;
+                        self.fixed = true;
+                    }
                 }
             }
         }
 
         Ok(())
+    }
+}
+
+/// Removes the given `paths` from a root `package.json` `workspaces` field.
+///
+/// The field can be either an array (`["packages/*"]`) or an object holding a
+/// `packages` array (Yarn/Bun: `{ "packages": ["packages/*"] }`).
+///
+/// Returns `true` when the field had a known shape and was edited, and `false`
+/// when the shape is unrecognized and was left untouched (so the caller can
+/// keep reporting the issue instead of silently claiming a fix).
+fn retain_existing_workspace_paths(workspaces: &mut serde_json::Value, paths: &[String]) -> bool {
+    let workspace_paths = match workspaces {
+        serde_json::Value::Array(workspace_paths) => Some(workspace_paths),
+        serde_json::Value::Object(object) => object
+            .get_mut("packages")
+            .and_then(serde_json::Value::as_array_mut),
+        _ => None,
+    };
+
+    match workspace_paths {
+        Some(workspace_paths) => {
+            workspace_paths.retain(|package| match package.as_str() {
+                Some(package) => !paths.contains(&package.to_string()),
+                None => true,
+            });
+
+            true
+        }
+        None => false,
     }
 }
 
@@ -211,5 +238,47 @@ mod test {
 
         colored::control::set_override(false);
         insta::assert_snapshot!(issue.message());
+    }
+
+    #[test]
+    fn retain_paths_array_workspaces() {
+        let mut workspaces = serde_json::json!(["apps/*", "empty/*", "docs"]);
+
+        let edited =
+            retain_existing_workspace_paths(&mut workspaces, &["empty/*".into(), "docs".into()]);
+
+        assert!(edited);
+        assert_eq!(workspaces, serde_json::json!(["apps/*"]));
+    }
+
+    #[test]
+    fn retain_paths_object_workspaces() {
+        // Yarn/Bun object form: `{ "packages": [...] }`. Previously panicked.
+        let mut workspaces = serde_json::json!({
+            "packages": ["apps/*", "empty/*", "docs"],
+            "catalog": { "react": "^19.0.0" },
+        });
+
+        let edited =
+            retain_existing_workspace_paths(&mut workspaces, &["empty/*".into(), "docs".into()]);
+
+        assert!(edited);
+        assert_eq!(
+            workspaces,
+            serde_json::json!({
+                "packages": ["apps/*"],
+                "catalog": { "react": "^19.0.0" },
+            })
+        );
+    }
+
+    #[test]
+    fn retain_paths_unknown_shape_is_noop() {
+        let mut workspaces = serde_json::json!("packages/*");
+
+        let edited = retain_existing_workspace_paths(&mut workspaces, &["packages/*".into()]);
+
+        assert!(!edited);
+        assert_eq!(workspaces, serde_json::json!("packages/*"));
     }
 }
