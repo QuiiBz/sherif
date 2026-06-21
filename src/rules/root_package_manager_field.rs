@@ -34,7 +34,7 @@ impl Issue for RootPackageManagerFieldIssue {
     }
 
     fn why(&self) -> Cow<'static, str> {
-        Cow::Borrowed("The root package.json should specify the package manager and version to use. Useful for tools like corepack.")
+        Cow::Borrowed("The root package.json should specify the package manager and version to use, via the `packageManager` or `devEngines.packageManager` field. Useful for tools like corepack.")
     }
 }
 
@@ -53,7 +53,7 @@ mod test {
         insta::assert_snapshot!(issue.message());
         assert_eq!(
             issue.why(),
-            "The root package.json should specify the package manager and version to use. Useful for tools like corepack."
+            "The root package.json should specify the package manager and version to use, via the `packageManager` or `devEngines.packageManager` field. Useful for tools like corepack."
         );
     }
 }

@@ -181,7 +181,7 @@ The root `package.json` is private, so making a distinction between `dependencie
 
 #### `root-package-manager-field` ❌
 
-The root `package.json` should specify the package manager and version to use. Useful for tools like corepack.
+The root `package.json` should specify the package manager and version to use, either via the `packageManager` field or the `devEngines.packageManager` field. Useful for tools like corepack.
 
 #### `root-package-private-field` ❌
 

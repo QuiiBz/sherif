@@ -615,6 +615,78 @@ mod test {
     }
 
     #[test]
+    fn collect_root_dev_engines() {
+        let args = Args {
+            path: "fixtures/dev-engines".into(),
+            fix: false,
+            select: None,
+            no_install: true,
+            fail_on_warnings: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args.path).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "dev-engines");
+
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
+        assert_eq!(issues.total_len(), 0);
+    }
+
+    #[test]
+    fn collect_root_dev_engines_array() {
+        let args = Args {
+            path: "fixtures/dev-engines-array".into(),
+            fix: false,
+            select: None,
+            no_install: true,
+            fail_on_warnings: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args.path).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "dev-engines-array");
+
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
+        assert_eq!(issues.total_len(), 0);
+    }
+
+    #[test]
+    fn collect_root_dev_engines_without_package_manager() {
+        let args = Args {
+            path: "fixtures/dev-engines-no-package-manager".into(),
+            fix: false,
+            select: None,
+            no_install: true,
+            fail_on_warnings: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args.path).unwrap();
+        assert_eq!(
+            packages_list.root_package.get_name(),
+            "dev-engines-no-package-manager"
+        );
+
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
+        assert_eq!(issues.total_len(), 1);
+
+        let issues = issues.into_iter().collect::<IndexMap<_, _>>();
+        assert_eq!(
+            issues.get(&PackageType::Root).unwrap()[0].name(),
+            "root-package-manager-field"
+        );
+    }
+
+    #[test]
     fn collect_dependencies() {
         let args = Args {
             path: "fixtures/dependencies".into(),
