@@ -57,7 +57,7 @@ jobs:
       - uses: QuiiBz/sherif@v1
         # Optionally, you can specify a version and arguments to run Sherif with:
         # with:
-          # version: 'v1.11.1'
+          # version: 'v1.12.0'
           # args: '--ignore-rule root-package-manager-field'
 
 # Using `npx` to run Sherif
@@ -73,7 +73,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 24
-      - run: npx sherif@1.11.1
+      - run: npx sherif@1.12.0
 ```
 
 </details>
