@@ -1,28 +1,47 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require('child_process')
-const fs = require('fs')
 
 /**
- * Detects if the system is using musl libc (e.g., Alpine Linux)
+ * Detects if the system is using musl libc.
  */
 function isMusl(os) {
   if (os !== 'linux') {
     return false
   }
 
-  // Check for musl dynamic linker
   try {
-    return fs.existsSync('/lib/ld-musl-x86_64.so.1') ||
-           fs.existsSync('/lib/ld-musl-aarch64.so.1')
+    const report = process.report?.getReport?.()
+    const header = report?.header
+    const sharedObjects = report?.sharedObjects ?? header?.sharedObjects ?? []
+
+    if (header?.glibcVersionRuntime) {
+      return false
+    }
+
+    return sharedObjects.some((sharedObject) => sharedObject.includes('ld-musl'))
   } catch (e) {
     return false
   }
 }
 
+function getNpmPackageNames(os, arch) {
+  const npmPackageName = `sherif-${os}-${arch}`
+
+  if (isMusl(os)) {
+    return [`${npmPackageName}-musl`, npmPackageName]
+  }
+
+  if (os === 'linux') {
+    return [npmPackageName, `${npmPackageName}-musl`]
+  }
+
+  return [npmPackageName]
+}
+
 /**
  * Returns the executable path which is located inside `node_modules`
- * The naming convention is app-${os}-${arch}[-musl]
+ * The naming convention is sherif-${os}-${arch}[-musl]
  * If the platform is `win32` or `cygwin`, executable will include a `.exe` extension.
  * @see https://nodejs.org/api/os.html#osarch
  * @see https://nodejs.org/api/os.html#osplatform
@@ -37,20 +56,20 @@ function getExePath() {
     extension = '.exe'
   }
 
-  let npmPackageName = `sherif-${os}-${arch}`
+  const npmPackageNames = getNpmPackageNames(os, arch)
 
-  if (isMusl(os)) {
-    npmPackageName += '-musl'
+  for (const npmPackageName of npmPackageNames) {
+    try {
+      // Since the binary will be located inside `node_modules`, we can simply call `require.resolve`
+      return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
+    } catch (e) {
+      // Try the next compatible libc package before reporting a missing binary.
+    }
   }
 
-  try {
-    // Since the binary will be located inside `node_modules`, we can simply call `require.resolve`
-    return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
-  } catch (e) {
-    throw new Error(
-      `Couldn't find application binary inside node_modules for ${npmPackageName}.`
-    )
-  }
+  throw new Error(
+    `Couldn't find application binary inside node_modules for ${npmPackageNames.join(' or ')}.`
+  )
 }
 
 /**

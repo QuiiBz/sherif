@@ -4,8 +4,34 @@ import * as github from '@actions/github';
 import * as exec from '@actions/exec';
 import * as os from 'os';
 import * as path from 'path';
-import * as fs from 'fs';
 import * as fsp from 'fs/promises';
+
+type NodeReport = {
+  header?: {
+    glibcVersionRuntime?: string;
+  };
+  sharedObjects?: string[];
+};
+
+function isMusl(platform: NodeJS.Platform): boolean {
+  if (platform !== 'linux') {
+    return false;
+  }
+
+  try {
+    const report = process.report?.getReport?.() as NodeReport | undefined;
+    const header = report?.header;
+    const sharedObjects = report?.sharedObjects ?? [];
+
+    if (header?.glibcVersionRuntime) {
+      return false;
+    }
+
+    return sharedObjects.some((sharedObject) => sharedObject.includes('ld-musl'));
+  } catch {
+    return false;
+  }
+}
 
 async function run(): Promise<void> {
   try {
@@ -30,20 +56,7 @@ async function run(): Promise<void> {
     // Get platform and architecture specific details
     const platform = os.platform();
     const arch = os.arch();
-
-    const isMusl = (): boolean => {
-      if (platform !== 'linux') {
-        return false;
-      }
-
-      // Check for musl dynamic linker
-      try {
-        return fs.existsSync('/lib/ld-musl-x86_64.so.1') ||
-               fs.existsSync('/lib/ld-musl-aarch64.so.1');
-      } catch {
-        return false;
-      }
-    };
+    const musl = isMusl(platform);
 
     // Map platform and architecture to release asset names
     const platformTargets: Record<string, Record<string, string>> = {
@@ -56,8 +69,8 @@ async function run(): Promise<void> {
         'x64': 'x86_64-pc-windows-msvc'
       },
       'linux': {
-        'arm64': isMusl() ? 'aarch64-unknown-linux-musl' : 'aarch64-unknown-linux-gnu',
-        'x64': isMusl() ? 'x86_64-unknown-linux-musl' : 'x86_64-unknown-linux-gnu'
+        'arm64': musl ? 'aarch64-unknown-linux-musl' : 'aarch64-unknown-linux-gnu',
+        'x64': musl ? 'x86_64-unknown-linux-musl' : 'x86_64-unknown-linux-gnu'
       }
     };
 
