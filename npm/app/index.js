@@ -25,10 +25,6 @@ function isMusl(os) {
   }
 }
 
-function resolveBinary(npmPackageName, extension) {
-  return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
-}
-
 function getNpmPackageNames(os, arch) {
   const npmPackageName = `sherif-${os}-${arch}`
 
@@ -65,7 +61,7 @@ function getExePath() {
   for (const npmPackageName of npmPackageNames) {
     try {
       // Since the binary will be located inside `node_modules`, we can simply call `require.resolve`
-      return resolveBinary(npmPackageName, extension)
+      return require.resolve(`${npmPackageName}/bin/sherif${extension}`)
     } catch (e) {
       // Try the next compatible libc package before reporting a missing binary.
     }
