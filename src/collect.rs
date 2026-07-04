@@ -60,6 +60,11 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
             }
         }
 
+        // Ignore empty directories, which can linger after switching branches in git, for example.
+        if fs::read_dir(&path).is_ok_and(|mut dir| dir.next().is_none()) {
+            return;
+        }
+
         match Package::new(path.clone()) {
             Ok(package) => packages.push(package),
             Err(error) => {
@@ -525,6 +530,32 @@ mod test {
         assert_eq!(packages_issues.len(), 2);
         assert_eq!(packages_issues[0].name(), "packages-without-package-json");
         assert_eq!(packages_issues[1].name(), "packages-without-package-json");
+    }
+
+    #[test]
+    fn collect_packages_skips_empty_directories() {
+        let root = Path::new("fixtures/empty-package-directories");
+        // Git doesn't track empty directories, so create one at test time to
+        // emulate a stale directory left over after switching branches.
+        let empty_dir = root.join("packages/empty");
+        fs::create_dir_all(&empty_dir).unwrap();
+
+        let result = collect_packages(root);
+
+        let cleanup = fs::remove_dir_all(&empty_dir);
+
+        assert!(result.is_ok());
+        let PackagesList {
+            root_package,
+            packages,
+            packages_issues,
+        } = result.unwrap();
+
+        assert_eq!(root_package.get_name(), "empty-package-directories");
+        assert_eq!(packages.len(), 1);
+        assert!(packages_issues.is_empty());
+
+        cleanup.unwrap();
     }
 
     #[test]
