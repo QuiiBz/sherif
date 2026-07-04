@@ -129,6 +129,14 @@ jobs:
           mkdir -p "${node_pkg}/bin"
           # generate package.json from the template
           envsubst < package.json.tmpl > "${node_pkg}/package.json"
+          if [ "${node_os}" = "linux" ]; then
+            node_libc="glibc"
+            if [ "${node_variant}" = "musl" ]; then
+              node_libc="musl"
+            fi
+            export node_libc
+            node -e "const fs = require('fs'); const packageJsonPath = process.argv[1]; const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')); packageJson.libc = [process.env.node_libc]; fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n')" "${node_pkg}/package.json"
+          fi
           cp "../target/${{ matrix.build.TARGET }}/release/${{ matrix.build.BIN }}" "${node_pkg}/bin"
           cp ../README.md "${node_pkg}"
           # publish the package
