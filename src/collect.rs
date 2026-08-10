@@ -337,12 +337,13 @@ pub fn collect_issues(config: &Config, packages_list: PackagesList) -> IssuesLis
         issues.add_raw(PackageType::None, package_issue);
     }
 
-    // Checking the minimum release age requires querying the registry, so we
-    // don't do anything if the rule is ignored.
-    if !config
-        .ignore_rule
-        .iter()
-        .any(|rule| rule == unnecessary_release_age_exclude::RULE_NAME)
+    // Checking the minimum release age requires querying the registry, so it is
+    // opt-in, and also skipped if the rule is ignored.
+    if config.check_release_age
+        && !config
+            .ignore_rule
+            .iter()
+            .any(|rule| rule == unnecessary_release_age_exclude::RULE_NAME)
     {
         for issue in check_release_age_excludes(&root) {
             issues.add_raw(PackageType::None, issue);
@@ -680,6 +681,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -718,6 +720,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             path: "fixtures/root-issues-fixed".into(),
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
@@ -740,6 +743,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -761,6 +765,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -782,6 +787,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -812,6 +818,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -845,6 +852,32 @@ mod test {
     }
 
     #[test]
+    fn collect_release_age_excludes_is_opt_in() {
+        let args = Args {
+            path: "fixtures/release-age-pnpm".into(),
+            fix: false,
+            select: None,
+            no_install: true,
+            fail_on_warnings: false,
+            check_release_age: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        // The fixture has a minimum release age with exclusions, but the rule
+        // queries the registry, so it doesn't run without `--check-release-age`.
+        let packages_list = collect_packages(&args.path).unwrap();
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
+
+        assert!(!issues
+            .into_iter()
+            .flat_map(|(_, issues)| issues)
+            .any(|issue| issue.name() == unnecessary_release_age_exclude::RULE_NAME));
+    }
+
+    #[test]
     fn collect_dependencies_allow() {
         let args = Args {
             path: "fixtures/dependencies".into(),
@@ -852,6 +885,7 @@ mod test {
             select: None,
             no_install: false,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: vec!["next@4.5.6".to_string(), "*eslint*".to_string()],
@@ -880,6 +914,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -912,6 +947,7 @@ mod test {
             select: None,
             no_install: false,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -947,6 +983,7 @@ mod test {
             select: None,
             no_install: true,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -969,6 +1006,7 @@ mod test {
             select: None,
             no_install: false,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),
@@ -1005,6 +1043,7 @@ mod test {
             select: None,
             no_install: false,
             fail_on_warnings: false,
+            check_release_age: false,
             ignore_rule: Vec::new(),
             ignore_package: Vec::new(),
             ignore_dependency: Vec::new(),

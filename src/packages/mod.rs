@@ -40,6 +40,7 @@ pub struct Config {
     pub select: Option<AutofixSelect>,
     pub no_install: bool,
     pub fail_on_warnings: bool,
+    pub check_release_age: bool,
     pub ignore_dependency: Vec<String>,
     pub ignore_package: Vec<String>,
     pub ignore_rule: Vec<String>,
@@ -61,6 +62,10 @@ impl Config {
 
         if args.fail_on_warnings {
             self.fail_on_warnings = true;
+        }
+
+        if args.check_release_age {
+            self.check_release_age = true;
         }
 
         if !args.ignore_dependency.is_empty() {

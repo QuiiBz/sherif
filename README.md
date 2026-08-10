@@ -19,7 +19,7 @@ Sherif is an opinionated, zero-config linter for TypeScript & JavaScript monorep
 - ✨ **PNPM, Bun, NPM, Yarn...**: sherif works with all package managers
 - 🔎 **Zero-config**: it just works and prevents regressions
 - ⚡ **Fast**: doesn't need `node_modules` installed, written in 🦀 Rust
-- 📴 **Offline**: every rule works without network access, [except `unnecessary-release-age-exclude`](#rules)
+- 📴 **Offline**: every rule works without network access, except the opt-in [`unnecessary-release-age-exclude`](#rules)
 
 ## Installation
 
@@ -210,10 +210,17 @@ The following configurations are read from the monorepo root:
 npm is not supported, as it doesn't have an exclusion list. pnpm 10.x, which configures the minimum release age in `.npmrc` instead of `pnpm-workspace.yaml`, is not supported either.
 
 > [!IMPORTANT]
-> **This is the only rule that requires network access.** Deciding whether an exclusion is still useful requires knowing when versions were published, and that date is nowhere on disk: lockfiles (`pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, `bun.lock`) only contain resolved versions and integrity hashes, and package managers strip publish dates from their metadata cache. The rule therefore fetches the registry document of the excluded packages (this is also what package managers do to enforce the minimum release age in the first place).
+> **This is the only rule that requires network access, and the only one that is disabled by default.** Enable it with `--check-release-age`:
+>
+> ```bash
+> sherif --check-release-age
+> ```
+>
+> Deciding whether an exclusion is still useful requires knowing when versions were published, and that date is nowhere on disk: lockfiles (`pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, `bun.lock`) only contain resolved versions and integrity hashes, and package managers strip publish dates from their metadata cache. The rule therefore fetches the registry document of the excluded packages (this is also what package managers do to enforce the minimum release age in the first place).
 
 Requests are only sent to the public npm registry (`https://registry.npmjs.org`), and only for the packages of the exclusion lists. Nothing is sent if:
 
+- `--check-release-age` isn't passed;
 - no configuration above defines a minimum release age with a non-empty exclusion list;
 - the rule is ignored via `-r unnecessary-release-age-exclude`;
 - a custom registry is configured in the root `.npmrc`, via `registry=` (no request at all) or `@scope:registry=` (no request for the packages of that scope).
@@ -237,6 +244,7 @@ When using many CLI arguments, it might be easier to move to the configuration f
     "select": "highest", // "highest" | "lowest"
     "noInstall": false,
     "failOnWarnings": false,
+    "checkReleaseAge": false,
     "ignoreDependency": [], // string[]
     "ignorePackage": [], // string[]
     "ignoreRule": [] // string[]

@@ -43,6 +43,10 @@ pub struct Args {
     #[arg(long)]
     pub fail_on_warnings: bool,
 
+    /// Enable the `unnecessary-release-age-exclude` rule, which queries the npm registry.
+    #[arg(long)]
+    pub check_release_age: bool,
+
     /// Ignore the `multiple-dependency-versions` rule for the given dependency name and/or version.
     #[arg(long, short)]
     pub ignore_dependency: Vec<String>,
@@ -64,6 +68,7 @@ impl From<Args> for Config {
             select: args.select,
             no_install: args.no_install,
             fail_on_warnings: args.fail_on_warnings,
+            check_release_age: args.check_release_age,
             ignore_dependency: args.ignore_dependency,
             ignore_package: args.ignore_package,
             ignore_rule: args.ignore_rule,
