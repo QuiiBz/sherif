@@ -19,6 +19,7 @@ Sherif is an opinionated, zero-config linter for TypeScript & JavaScript monorep
 - ✨ **PNPM, Bun, NPM, Yarn...**: sherif works with all package managers
 - 🔎 **Zero-config**: it just works and prevents regressions
 - ⚡ **Fast**: doesn't need `node_modules` installed, written in 🦀 Rust
+- 📴 **Offline**: every rule works without network access, [except `unnecessary-release-age-exclude`](#rules)
 
 ## Installation
 
@@ -190,6 +191,36 @@ The root `package.json` should be private to prevent accidentaly publishing it t
 #### `types-in-dependencies` ❌
 
 Private packages shouldn't have `@types/*` in `dependencies`, since they don't need it at runtime. Move them to `devDependencies`.
+
+#### `unnecessary-release-age-exclude` ⚠️
+
+Packages excluded from the minimum release age (the cooldown that protects against compromised releases) bypass it forever, even though the bypass is usually added to unblock a single urgent upgrade. This rule reports exclusions that don't unblock anything anymore:
+
+- exclusions pinning versions that are past the minimum release age, e.g. `typescript@5.4.5` - those versions are already published, so they will never be gated again;
+- exclusions without a version whose package hasn't published anything for at least ten times the minimum release age. A package that publishes often would be gated again as soon as it releases, so only dormant packages are reported.
+
+The following configurations are read from the monorepo root:
+
+| Package manager | File                  | Minimum release age                | Exclusion list              |
+| --------------- | --------------------- | ---------------------------------- | --------------------------- |
+| pnpm            | `pnpm-workspace.yaml` | `minimumReleaseAge` (minutes)      | `minimumReleaseAgeExclude`  |
+| Yarn            | `.yarnrc.yml`         | `npmMinimalAgeGate` (minutes)      | `npmPreapprovedPackages`    |
+| Bun             | `bunfig.toml`         | `minimumReleaseAge` (seconds)      | `minimumReleaseAgeExcludes` |
+
+npm is not supported, as it doesn't have an exclusion list. pnpm 10.x, which configures the minimum release age in `.npmrc` instead of `pnpm-workspace.yaml`, is not supported either.
+
+> [!IMPORTANT]
+> **This is the only rule that requires network access.** Deciding whether an exclusion is still useful requires knowing when versions were published, and that date is nowhere on disk: lockfiles (`pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, `bun.lock`) only contain resolved versions and integrity hashes, and package managers strip publish dates from their metadata cache. The rule therefore fetches the registry document of the excluded packages (this is also what package managers do to enforce the minimum release age in the first place).
+
+Requests are only sent to the public npm registry (`https://registry.npmjs.org`), and only for the packages of the exclusion lists. Nothing is sent if:
+
+- no configuration above defines a minimum release age with a non-empty exclusion list;
+- the rule is ignored via `-r unnecessary-release-age-exclude`;
+- a custom registry is configured in the root `.npmrc`, via `registry=` (no request at all) or `@scope:registry=` (no request for the packages of that scope).
+
+The rule is best-effort: if the registry is unreachable - offline machine, sandboxed CI, network error - it reports nothing instead of failing, and doesn't change the exit code.
+
+Exclusions using a pattern (e.g. `@myorg/*`) or a version range (e.g. `nx@^21.0.0`) are skipped, as they can match versions that aren't published yet.
 
 #### `unordered-dependencies` ❌
 

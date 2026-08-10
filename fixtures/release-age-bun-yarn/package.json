@@ -1,0 +1,4 @@
+{
+  "name": "release-age-bun-yarn",
+  "workspaces": ["packages/*"]
+}

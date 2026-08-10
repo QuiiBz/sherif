@@ -1,0 +1,7 @@
+---
+source: src/rules/unnecessary_release_age_exclude.rs
+expression: issue.message()
+---
+  │ minimumReleaseAge: 86400
+  │ minimumReleaseAgeExcludes:   ← bunfig.toml bypasses the minimum release age...
+  -  - 'typescript'   ← published 12 days ago, past the minimum release age

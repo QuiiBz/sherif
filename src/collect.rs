@@ -2,16 +2,20 @@ use crate::packages::root::RootPackage;
 use crate::packages::semversion::SemVersion;
 use crate::packages::{Config, Package, PackagesList};
 use crate::printer::print_error;
+use crate::release_age;
 use crate::rules::multiple_dependency_versions::MultipleDependencyVersionsIssue;
 use crate::rules::non_existant_packages::NonExistantPackagesIssue;
 use crate::rules::packages_without_package_json::PackagesWithoutPackageJsonIssue;
 use crate::rules::types_in_dependencies::TypesInDependenciesIssue;
+use crate::rules::unnecessary_release_age_exclude::{
+    self, UnnecessaryExclude, UnnecessaryReleaseAgeExcludeIssue,
+};
 use crate::rules::unsync_similar_dependencies::{
     SimilarDependency, UnsyncSimilarDependenciesIssue,
 };
 use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
 use std::fs::{self};
 use std::path::{Path, PathBuf};
@@ -249,16 +253,81 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
     }
 
     Ok(PackagesList {
+        root: root.to_path_buf(),
         root_package,
         packages,
         packages_issues,
     })
 }
 
+/// Checks the minimum release age bypasses of the monorepo, and reports those
+/// that don't bypass anything anymore. Best-effort: any package we can't get
+/// the publish times of is skipped, so that an unreachable registry never
+/// fails the run.
+fn check_release_age_excludes(root: &Path) -> Vec<BoxIssue> {
+    let configs = release_age::collect_configs(root);
+
+    if configs.is_empty() {
+        return Vec::new();
+    }
+
+    let Some(registry) = release_age::registry(root) else {
+        return Vec::new();
+    };
+
+    let names = configs
+        .iter()
+        .flat_map(|config| &config.excludes)
+        .filter(|exclude| !exclude.is_pattern() && registry.handles(&exclude.name))
+        .map(|exclude| exclude.name.clone())
+        .collect::<IndexSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+
+    let publish_times = release_age::fetch_publish_times(&registry.url, &names);
+    let now = release_age::now();
+    let mut issues: Vec<BoxIssue> = Vec::new();
+
+    for config in configs {
+        let unnecessary = config
+            .excludes
+            .iter()
+            .filter(|exclude| !exclude.is_pattern())
+            .filter_map(|exclude| {
+                let times = publish_times.get(&exclude.name)?;
+
+                let (published_at, dormant) =
+                    match release_age::evaluate(exclude, times, now, config.max_age) {
+                        release_age::Verdict::NoEffect { published_at } => (published_at, false),
+                        release_age::Verdict::Dormant { published_at } => (published_at, true),
+                        _ => return None,
+                    };
+
+                Some(UnnecessaryExclude {
+                    raw: exclude.raw.clone(),
+                    age_in_days: now.saturating_sub(published_at) / 86400,
+                    dormant,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        if !unnecessary.is_empty() {
+            issues.push(UnnecessaryReleaseAgeExcludeIssue::new(
+                config.source,
+                config.max_age,
+                unnecessary,
+            ));
+        }
+    }
+
+    issues
+}
+
 pub fn collect_issues(config: &Config, packages_list: PackagesList) -> IssuesList<'_> {
     let mut issues = IssuesList::new(&config.ignore_rule);
 
     let PackagesList {
+        root,
         root_package,
         packages,
         packages_issues,
@@ -266,6 +335,18 @@ pub fn collect_issues(config: &Config, packages_list: PackagesList) -> IssuesLis
 
     for package_issue in packages_issues {
         issues.add_raw(PackageType::None, package_issue);
+    }
+
+    // Checking the minimum release age requires querying the registry, so we
+    // don't do anything if the rule is ignored.
+    if !config
+        .ignore_rule
+        .iter()
+        .any(|rule| rule == unnecessary_release_age_exclude::RULE_NAME)
+    {
+        for issue in check_release_age_excludes(&root) {
+            issues.add_raw(PackageType::None, issue);
+        }
     }
 
     issues.add(PackageType::Root, root_package.check_private());
@@ -454,6 +535,7 @@ mod test {
 
         assert!(result.is_ok());
         let PackagesList {
+            root: _,
             root_package,
             packages,
             packages_issues,
@@ -472,6 +554,7 @@ mod test {
 
         assert!(result.is_ok());
         let PackagesList {
+            root: _,
             root_package,
             packages,
             packages_issues,
@@ -490,6 +573,7 @@ mod test {
 
         assert!(result.is_ok());
         let PackagesList {
+            root: _,
             root_package,
             packages,
             packages_issues,
@@ -520,6 +604,7 @@ mod test {
 
         assert!(result.is_ok());
         let PackagesList {
+            root: _,
             root_package,
             packages,
             packages_issues,
@@ -546,6 +631,7 @@ mod test {
 
         assert!(result.is_ok());
         let PackagesList {
+            root: _,
             root_package,
             packages,
             packages_issues,
@@ -565,6 +651,7 @@ mod test {
 
         assert!(result.is_ok());
         let PackagesList {
+            root: _,
             root_package,
             packages,
             ..

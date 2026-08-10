@@ -17,6 +17,7 @@ pub mod root;
 pub mod semversion;
 
 pub struct PackagesList {
+    pub root: PathBuf,
     pub root_package: RootPackage,
     pub packages: Vec<Package>,
     pub packages_issues: Vec<BoxIssue>,

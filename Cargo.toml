@@ -28,6 +28,8 @@ semver = "1.0.18"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = { version = "1.0.107", features = ["preserve_order"] }
 serde_yaml = "0.9.25"
+toml = { version = "1.1.4", default-features = false, features = ["parse", "serde"] }
+ureq = { version = "3.4.0", default-features = false, features = ["rustls", "gzip"] }
 
 [dev-dependencies]
 debugless-unwrap = "0.0.4"

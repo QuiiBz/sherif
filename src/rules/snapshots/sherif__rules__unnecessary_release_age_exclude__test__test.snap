@@ -1,0 +1,8 @@
+---
+source: src/rules/unnecessary_release_age_exclude.rs
+expression: issue.message()
+---
+  │ minimumReleaseAge: 1440
+  │ minimumReleaseAgeExclude:   ← pnpm-workspace.yaml bypasses the minimum release age...
+  -  - 'nx@21.6.5'   ← published 42 days ago, past the minimum release age
+  -  - 'left-pad'   ← nothing published for 3045 days, currently bypasses nothing
