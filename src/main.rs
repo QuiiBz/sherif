@@ -14,6 +14,7 @@ mod json;
 mod packages;
 mod plural;
 mod printer;
+mod release_age;
 mod rules;
 
 fn is_ci() -> bool {

@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - 'nx@21.6.5'
+  - '@myorg/*'

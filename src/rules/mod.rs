@@ -14,6 +14,7 @@ pub mod root_package_dependencies;
 pub mod root_package_manager_field;
 pub mod root_package_private_field;
 pub mod types_in_dependencies;
+pub mod unnecessary_release_age_exclude;
 pub mod unordered_dependencies;
 pub mod unsync_similar_dependencies;
 
