@@ -13,6 +13,7 @@ use crate::rules::{BoxIssue, IssuesList, PackageType};
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
 
@@ -21,6 +22,51 @@ const PNPM_WORKSPACE: &str = "pnpm-workspace.yaml";
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PnpmWorkspace {
     pub packages: Vec<String>,
+}
+
+/// Recursively looks for packages (directories containing a `package.json`)
+/// starting at `dir`. This mirrors pnpm's own behavior for `**` glob
+/// segments: if a directory doesn't contain a `package.json`, its
+/// subdirectories are traversed looking for one, at any depth.
+fn find_nested_packages(dir: &Path) -> Vec<PathBuf> {
+    if dir.join("package.json").is_file() {
+        return vec![dir.to_path_buf()];
+    }
+
+    let entries = match dir.read_dir() {
+        Ok(entries) => entries,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut found = Vec::new();
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+
+        if !path.is_dir() {
+            continue;
+        }
+
+        if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
+            // Ignore hidden directories and `node_modules`, like pnpm does.
+            if name.starts_with('.') || name == "node_modules" {
+                continue;
+            }
+        }
+
+        found.extend(find_nested_packages(&path));
+    }
+
+    found
+}
+
+/// Returns whether `real_path` should be excluded, based on the list of
+/// excluded paths (`!`-prefixed patterns from the workspace config).
+fn is_excluded_path(real_path: &str, excluded_paths: &[String]) -> bool {
+    excluded_paths.iter().any(|excluded_path| {
+        real_path.starts_with(excluded_path.as_str())
+            && !real_path.replace(excluded_path.as_str(), "").contains('/')
+    })
 }
 
 pub fn collect_packages(root: &Path) -> Result<PackagesList> {
@@ -49,6 +95,7 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
     }
 
     let mut packages_issues: Vec<BoxIssue> = Vec::new();
+    let mut seen_paths: HashSet<PathBuf> = HashSet::new();
 
     let mut add_package = |packages_issues: &mut Vec<BoxIssue>, path: PathBuf| {
         // Ignore hidden directories, e.g. `.npm`, `.react-email`
@@ -62,6 +109,11 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
 
         // Ignore empty directories, which can linger after switching branches in git, for example.
         if fs::read_dir(&path).is_ok_and(|mut dir| dir.next().is_none()) {
+            return;
+        }
+
+        // Ignore paths already collected by another (potentially overlapping) glob pattern.
+        if !seen_paths.insert(path.clone()) {
             return;
         }
 
@@ -110,32 +162,65 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
         let mut expanded_packages = Vec::new();
 
         for package in packages {
-            if let Some((directory, subdirectory)) = package.split_once("/*/") {
-                let directory = root.join(directory);
+            // `dir/**` matches `dir` and any of its subdirectories, at any depth
+            // (mirrors pnpm/micromatch's `**` semantics, where a directory
+            // lacking a `package.json` is traversed further).
+            if let Some(directory) = package.strip_suffix("/**") {
+                let start_dir = root.join(directory);
 
-                match directory.read_dir() {
-                    Ok(expanded_folders) => {
-                        for expanded_folder in expanded_folders.flatten() {
-                            let expanded_folder = expanded_folder.path();
-
-                            if expanded_folder.is_dir() {
-                                let path = expanded_folder
-                                    .to_string_lossy()
-                                    .to_string()
-                                    .replace(&(root.to_string_lossy().to_string() + "/"), "")
-                                    + "/"
-                                    + subdirectory;
-
-                                expanded_packages.push(path);
-                            }
+                if start_dir.is_dir() {
+                    for found in find_nested_packages(&start_dir) {
+                        if let Ok(relative) = found.strip_prefix(root) {
+                            expanded_packages.push(relative.to_string_lossy().to_string());
                         }
                     }
-                    Err(_) => {
+                } else {
+                    non_existant_paths.push(package.to_string());
+                }
+            } else if let Some((directory, suffix)) = package.split_once("/**/") {
+                let start_dir = root.join(directory);
+
+                if suffix == "*" {
+                    // `dir/**/*` requires at least one path segment past what
+                    // `**` matched, so exclude `dir` itself from the results.
+                    if start_dir.is_dir() {
+                        for found in find_nested_packages(&start_dir) {
+                            if found == start_dir {
+                                continue;
+                            }
+
+                            if let Ok(relative) = found.strip_prefix(root) {
+                                expanded_packages.push(relative.to_string_lossy().to_string());
+                            }
+                        }
+                    } else {
                         non_existant_paths.push(package.to_string());
-                        continue;
+                    }
+                } else {
+                    match start_dir.read_dir() {
+                        Ok(expanded_folders) => {
+                            for expanded_folder in expanded_folders.flatten() {
+                                let expanded_folder = expanded_folder.path();
+
+                                if expanded_folder.is_dir() {
+                                    let path = expanded_folder
+                                        .to_string_lossy()
+                                        .to_string()
+                                        .replace(&(root.to_string_lossy().to_string() + "/"), "")
+                                        + "/"
+                                        + suffix;
+
+                                    expanded_packages.push(path);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            non_existant_paths.push(package.to_string());
+                            continue;
+                        }
                     }
                 }
-            } else if let Some((directory, subdirectory)) = package.split_once("/**/") {
+            } else if let Some((directory, subdirectory)) = package.split_once("/*/") {
                 let directory = root.join(directory);
 
                 match directory.read_dir() {
@@ -213,18 +298,8 @@ pub fn collect_packages(root: &Path) -> Result<PackagesList> {
                     if package.file_type()?.is_dir() {
                         let path = package.path();
                         let real_path = path.to_string_lossy().to_string();
-                        let mut is_excluded = false;
 
-                        for excluded_path in &excluded_paths {
-                            if real_path.starts_with(excluded_path)
-                                && !real_path.replace(excluded_path, "").contains('/')
-                            {
-                                is_excluded = true;
-                                break;
-                            }
-                        }
-
-                        if !is_excluded {
+                        if !is_excluded_path(&real_path, &excluded_paths) {
                             add_package(&mut packages_issues, path);
                         }
                     }
@@ -872,6 +947,53 @@ mod test {
         let config = args.into();
         let issues = collect_issues(&config, packages_list);
         assert_eq!(issues.total_len(), 0);
+    }
+
+    #[test]
+    fn collect_packages_deeply_nested_double_star() {
+        // Regression test for https://github.com/QuiiBz/sherif/issues/161:
+        // a `packages/**` glob must find packages at any nesting depth, not
+        // just the first level under `packages/`.
+        let args = Args {
+            path: "fixtures/nested-star".into(),
+            fix: false,
+            select: None,
+            no_install: true,
+            fail_on_warnings: false,
+            ignore_rule: Vec::new(),
+            ignore_package: Vec::new(),
+            ignore_dependency: Vec::new(),
+        };
+
+        let packages_list = collect_packages(&args.path).unwrap();
+        assert_eq!(packages_list.root_package.get_name(), "nested-star");
+        assert!(packages_list.packages_issues.is_empty());
+        assert_eq!(packages_list.packages.len(), 4);
+
+        let mut names = packages_list
+            .packages
+            .iter()
+            .map(|package| package.get_name().clone().unwrap().to_string())
+            .collect::<Vec<_>>();
+        names.sort();
+
+        assert_eq!(
+            names,
+            vec![
+                "@repo/level1",
+                "@repo/level2",
+                "@repo/level3",
+                "@repo/level4"
+            ]
+        );
+
+        let config = args.into();
+        let issues = collect_issues(&config, packages_list);
+        assert_eq!(issues.total_len(), 4);
+
+        for issue in issues.into_iter().flat_map(|(_, issues)| issues) {
+            assert_eq!(issue.name(), "unordered-dependencies");
+        }
     }
 
     #[test]
