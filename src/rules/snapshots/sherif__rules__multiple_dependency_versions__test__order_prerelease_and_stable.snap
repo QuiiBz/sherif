@@ -1,0 +1,9 @@
+---
+source: src/rules/multiple_dependency_versions.rs
+expression: issue.message()
+---
+  ./apps
+      package-b                 15.0.0-rc.0   ↑ highest
+      package-a                 14.2.3   ∼ between
+  ./packages
+      package-c                 14.1.0   ↓ lowest
