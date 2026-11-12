@@ -298,6 +298,51 @@ mod test {
     }
 
     #[test]
+    fn order_prerelease_and_stable() {
+        let issue = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            indexmap::indexmap! {
+                "./apps/package-a".into() => SemVersion::parse("14.2.3").unwrap(),
+                "./apps/package-b".into() => SemVersion::parse("15.0.0-rc.0").unwrap(),
+                "./packages/package-c".into() => SemVersion::parse("14.1.0").unwrap(),
+            },
+            None,
+        );
+
+        colored::control::set_override(false);
+        insta::assert_snapshot!(issue.message());
+    }
+
+    #[test]
+    fn autofix_select_prerelease_and_stable() {
+        let versions = indexmap::indexmap! {
+            "./apps/package-a".into() => SemVersion::parse("14.2.3").unwrap(),
+            "./apps/package-b".into() => SemVersion::parse("15.0.0-rc.0").unwrap(),
+            "./packages/package-c".into() => SemVersion::parse("14.1.0").unwrap(),
+        };
+
+        let highest = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            versions.clone(),
+            Some(AutofixSelect::Highest),
+        );
+        assert_eq!(
+            highest.get_autofix_version().unwrap(),
+            Some("15.0.0-rc.0".to_string())
+        );
+
+        let lowest = MultipleDependencyVersionsIssue::new(
+            "test".to_string(),
+            versions,
+            Some(AutofixSelect::Lowest),
+        );
+        assert_eq!(
+            lowest.get_autofix_version().unwrap(),
+            Some("14.1.0".to_string())
+        );
+    }
+
+    #[test]
     fn exact_and_range() {
         let issue = MultipleDependencyVersionsIssue::new(
             "test".to_string(),

@@ -71,22 +71,14 @@ impl SemVersion {
     }
 
     pub fn cmp(&self, other: &Self) -> Ordering {
-        let mut ordering = self.patch().cmp(&other.patch());
-
-        ordering = match self.minor().cmp(&other.minor()) {
-            Ordering::Equal => ordering,
-            new_ordering => new_ordering,
-        };
-
-        ordering = match self.major().cmp(&other.major()) {
-            Ordering::Equal => ordering,
-            new_ordering => new_ordering,
-        };
-
-        match self.prerelease().cmp(&other.prerelease()) {
-            Ordering::Equal => ordering,
-            new_ordering => new_ordering,
-        }
+        // SemVer precedence: the prerelease only breaks ties between
+        // equal major.minor.patch versions (and a stable version sorts
+        // above its own prereleases, which `Prerelease`'s `Ord` handles).
+        self.major()
+            .cmp(&other.major())
+            .then_with(|| self.minor().cmp(&other.minor()))
+            .then_with(|| self.patch().cmp(&other.patch()))
+            .then_with(|| self.prerelease().cmp(&other.prerelease()))
     }
 
     pub fn is_valid(&self) -> bool {
@@ -94,5 +86,42 @@ impl SemVersion {
             Self::Exact(_) => true,
             Self::Range(version) => !version.comparators.is_empty(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn cmp(a: &str, b: &str) -> Ordering {
+        SemVersion::parse(a)
+            .unwrap()
+            .cmp(&SemVersion::parse(b).unwrap())
+    }
+
+    #[test]
+    fn cmp_stable() {
+        assert_eq!(cmp("1.2.3", "1.2.3"), Ordering::Equal);
+        assert_eq!(cmp("1.2.4", "1.2.3"), Ordering::Greater);
+        assert_eq!(cmp("1.3.0", "1.2.9"), Ordering::Greater);
+        assert_eq!(cmp("2.0.0", "1.9.9"), Ordering::Greater);
+        assert_eq!(cmp("^1.10.0", "~1.9.0"), Ordering::Greater);
+    }
+
+    #[test]
+    fn cmp_prerelease_same_version() {
+        assert_eq!(cmp("5.0.0", "5.0.0-rc.1"), Ordering::Greater);
+        assert_eq!(cmp("5.0.0-next.4", "5.0.0-next.3"), Ordering::Greater);
+        assert_eq!(cmp("5.0.0-beta.1", "5.0.0-alpha.9"), Ordering::Greater);
+    }
+
+    #[test]
+    fn cmp_prerelease_other_version() {
+        assert_eq!(cmp("15.0.0-rc.0", "14.2.3"), Ordering::Greater);
+        assert_eq!(cmp("2.0.0-beta.1", "1.4.0"), Ordering::Greater);
+        assert_eq!(cmp("1.10.0-rc.1", "^1.9.0"), Ordering::Greater);
+        assert_eq!(cmp("1.2.4-rc.1", "1.2.3"), Ordering::Greater);
+        assert_eq!(cmp("1.4.0", "2.0.0-beta.1"), Ordering::Less);
+        assert_eq!(cmp("2.0.0-beta.1", "1.9.0-rc.1"), Ordering::Greater);
     }
 }
